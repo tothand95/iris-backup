@@ -1,0 +1,150 @@
+:host {
+  display: block;
+}
+
+@keyframes iris-multi-select-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.iris-multi-select {
+  display: flex;
+  flex-direction: column;
+  min-width: 300px;
+  max-width: 420px;
+  width: max-content;
+  border-radius: var(--oi-border-radius-l);
+  background-color: var(--oi-background-color-primary);
+  box-shadow: var(--oi-shadow-mid);
+  overflow: hidden;
+  transform-origin: top center;
+  animation: iris-multi-select-in var(--oi-motion-duration-120) var(--oi-motion-ease-out) forwards;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+
+  &__search {
+    display: flex;
+    align-items: center;
+    padding: var(--oi-spacing-m) var(--oi-spacing-m);
+    border-bottom: var(--oi-border-width-default) solid var(--oi-border-color-default);
+
+    iris-text-input {
+      display: block;
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  &__menu {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--oi-spacing-s);
+    max-height: 320px;
+    overflow-y: auto;
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: var(--oi-spacing-m);
+    padding: var(--oi-spacing-xs) var(--oi-spacing-xs) var(--oi-spacing-xs) var(--oi-spacing-m);
+    border: none;
+    border-radius: var(--oi-border-radius-default);
+    background-color: transparent;
+    cursor: pointer;
+    text-align: left;
+    font-family: var(--oi-font-family-default);
+    color: var(--oi-content-color-primary);
+
+    &:hover {
+      background-color: var(--oi-background-color-secondary);
+    }
+
+    &--selected {
+      background-color: var(--oi-background-color-secondary);
+    }
+
+    &:focus-visible {
+      outline: none;
+      position: relative;
+      z-index: 1;
+      box-shadow: var(--oi-focus-ring);
+    }
+
+    &:disabled {
+      opacity: var(--oi-opacity-content-disabled);
+      pointer-events: none;
+      cursor: default;
+    }
+  }
+
+  &__check {
+    flex-shrink: 0;
+    pointer-events: none;
+  }
+
+  &__content {
+    display: flex;
+    flex: 1;
+    gap: 6px;
+    align-items: center;
+    min-width: 0;
+  }
+
+  &__item-icon {
+    flex-shrink: 0;
+    color: var(--oi-content-color-secondary);
+  }
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--oi-font-size-s);
+    line-height: var(--oi-line-height-s);
+    font-weight: var(--oi-font-weight-600);
+    color: var(--oi-content-color-primary);
+  }
+
+  &__description {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--oi-font-size-s);
+    line-height: var(--oi-line-height-s);
+    color: var(--oi-content-color-tertiary);
+  }
+
+  &__footer {
+    display: flex;
+    align-items: center;
+    gap: var(--oi-spacing-m);
+    padding: var(--oi-spacing-s) var(--oi-spacing-m);
+    border-top: var(--oi-border-width-default) solid var(--oi-border-color-default);
+  }
+
+  &__footer-button {
+    flex: 1;
+
+    ::ng-deep .iris-button {
+      width: 100%;
+    }
+  }
+}

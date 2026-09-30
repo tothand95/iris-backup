@@ -1,0 +1,74 @@
+<nav
+  class="iris-stepper"
+  [class.iris-stepper--horizontal]="orientation() === 'horizontal'"
+  [class.iris-stepper--vertical]="orientation() === 'vertical'"
+  [attr.aria-label]="progressLabel()">
+  @if (orientation() === 'horizontal') {
+    <div class="iris-stepper__header">
+      @for (view of stepViews(); track view.step) {
+        <ng-container [ngTemplateOutlet]="header" [ngTemplateOutletContext]="{ $implicit: view }" />
+      }
+    </div>
+    @if (selectedStep(); as step) {
+      <div class="iris-stepper__content">
+        <ng-container [ngTemplateOutlet]="step.content()" />
+      </div>
+    }
+  } @else {
+    @for (view of stepViews(); track view.step; let isLast = $last) {
+      <div class="iris-stepper__item">
+        <ng-container [ngTemplateOutlet]="header" [ngTemplateOutletContext]="{ $implicit: view }" />
+        @if (view.index === selectedIndex()) {
+          <div class="iris-stepper__content iris-stepper__content--vertical">
+            <ng-container [ngTemplateOutlet]="view.step.content()" />
+          </div>
+        }
+        @if (!isLast) {
+          <span class="iris-stepper__connector"></span>
+        }
+      </div>
+    }
+  }
+</nav>
+
+<ng-template #header let-view>
+  <div
+    class="iris-stepper__step"
+    [class.iris-stepper__step--current]="view.state === 'current' || view.state === 'error-current'"
+    [class.iris-stepper__step--completed]="view.state === 'completed'"
+    [class.iris-stepper__step--error]="view.state === 'error' || view.state === 'error-current'"
+    [class.iris-stepper__step--waiting]="view.state === 'waiting'"
+    [class.iris-stepper__step--default]="view.state === 'default'">
+    <button
+      class="iris-stepper__button"
+      type="button"
+      [disabled]="view.disabled"
+      [attr.aria-current]="isActive(view.state) ? 'step' : null"
+      (click)="select(view.index)">
+      <span class="iris-stepper__indicator">
+        @if (view.state === 'completed') {
+          <svg class="iris-stepper__glyph" width="8" height="6" viewBox="0 0 8 6" fill="none" aria-hidden="true" focusable="false">
+            <path d="M0.75 2.75L2.75 4.75L6.75 0.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        } @else if (view.state === 'error' || view.state === 'error-current') {
+          <svg
+            class="iris-stepper__glyph iris-stepper__glyph--bang"
+            width="2"
+            height="8"
+            viewBox="0 0 2 8"
+            fill="none"
+            aria-hidden="true"
+            focusable="false">
+            <path d="M1 0.75V4.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+            <circle cx="1" cy="7.1" r="0.9" fill="currentColor" />
+          </svg>
+        } @else {
+          <span class="iris-stepper__number">{{ view.index + 1 }}</span>
+        }
+      </span>
+      <span class="iris-stepper__text">
+        <span class="iris-stepper__label">{{ view.step.label() }}</span>
+      </span>
+    </button>
+  </div>
+</ng-template>

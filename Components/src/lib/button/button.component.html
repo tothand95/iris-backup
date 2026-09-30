@@ -1,0 +1,23 @@
+<button
+  class="iris-button"
+  [class.iris-button--primary]="variant() === 'primary'"
+  [class.iris-button--secondary]="variant() === 'secondary'"
+  [class.iris-button--ghost]="variant() === 'ghost'"
+  [class.iris-button--danger]="variant() === 'danger'"
+  [class.iris-button--sm]="size() === 'sm'"
+  [class.iris-button--lg]="size() === 'lg'"
+  [class.iris-button--leading-icon]="!labelHidden() && leadingIconName()"
+  [class.iris-button--trailing-icon]="!labelHidden() && trailingIconName()"
+  [class.iris-button--label-hidden]="labelHidden()"
+  [disabled]="disabled()"
+  [type]="type()">
+  @if (leadingIconName(); as icon) {
+    <iris-icon [name]="icon" [size]="iconDisplaySize()" label="" [decorative]="true" />
+  }
+  <span class="iris-button__label" [class.iris-screen-reader-only]="labelHidden()">
+    <ng-content />
+  </span>
+  @if (trailingIconName(); as icon) {
+    <iris-icon [name]="icon" [size]="iconDisplaySize()" label="" [decorative]="true" />
+  }
+</button>

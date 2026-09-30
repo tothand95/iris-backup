@@ -1,0 +1,91 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  pr-checks:
+    name: Angular v${{ matrix.angular }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      # Report every major independently — one failing version should not hide
+      # the result of the other two.
+      fail-fast: false
+      matrix:
+        include:
+          # Baseline: the versions the lockfile pins, installed verbatim, so
+          # this row also proves the lockfile is in sync with the manifest.
+          - angular: '20'
+            pin: false
+            ts: ''
+            vitest: ''
+            test: 'test:coverage'
+            storybook: true
+          - angular: '21'
+            pin: true
+            ts: '~5.9.0'
+            vitest: '^4.0.8'
+            test: 'test'
+            storybook: false
+          - angular: '22'
+            pin: true
+            ts: '~6.0.0'
+            vitest: '^4.0.8'
+            test: 'test'
+            storybook: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable corepack / pnpm
+        run: corepack enable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # Overrides must be written before the first install. See
+      # pipelines/pin-angular-version.mjs for why `pnpm add -w` is not enough:
+      # it leaves Components/node_modules on the old Angular, and every test
+      # then fails on TestBed.initTestEnvironment.
+      - name: Pin Angular ${{ matrix.angular }} toolchain
+        if: matrix.pin
+        run: node pipelines/pin-angular-version.mjs "${{ matrix.angular }}" "${{ matrix.ts }}" "${{ matrix.vitest }}"
+
+      - name: Install dependencies
+        if: ${{ !matrix.pin }}
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      # Not --frozen-lockfile: the overrides deliberately change resolution.
+      # The version echo keeps the two-Angular failure mode obvious in logs.
+      - name: Install dependencies (Angular ${{ matrix.angular }})
+        if: matrix.pin
+        run: |
+          set -e
+          pnpm install --no-frozen-lockfile --ignore-scripts
+          pnpm ls typescript vitest @angular/core ng-packagr
+          node -e "console.log('Components @angular/core:', require('./Components/node_modules/@angular/core/package.json').version)"
+
+      - name: Build tokens
+        run: pnpm run tokens:build
+
+      - name: Build icons
+        run: pnpm run icons:build
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Test
+        run: pnpm run ${{ matrix.test }}
+
+      - name: Build components
+        run: pnpm run components:build
+
+      # Storybook is developer tooling, not shipped output — building it once
+      # on the baseline is enough.
+      - name: Build Storybook
+        if: matrix.storybook
+        run: pnpm run storybook:build

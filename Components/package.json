@@ -1,0 +1,48 @@
+{
+  "name": "@oneidentity/iris-ui",
+  "version": "1.0.1",
+  "type": "module",
+  "publishConfig": {
+    "registry": "https://pkgs.dev.azure.com/1id/_packaging/OneIdentity/npm/registry/",
+    "access": "restricted"
+  },
+  "scripts": {
+    "codegen:registry": "node scripts/build-registry.mjs",
+    "verify:registry": "node scripts/verify-registry.mjs",
+    "build": "pnpm run codegen:registry && ng build iris-ui"
+  },
+  "peerDependencies": {
+    "@angular/cdk": "^20.0.0 || ^21.0.0 || ^22.0.0",
+    "@angular/common": "^20.0.0 || ^21.0.0 || ^22.0.0",
+    "@angular/core": "^20.0.0 || ^21.0.0 || ^22.0.0",
+    "@angular/forms": "^20.0.0 || ^21.0.0 || ^22.0.0",
+    "@angular/platform-browser": "^20.0.0 || ^21.0.0 || ^22.0.0",
+    "@angular/router": "^20.0.0 || ^21.0.0 || ^22.0.0",
+    "@oneidentity/iris-ui-tokens": "workspace:^",
+    "ag-grid-angular": "^35.0.0",
+    "ag-grid-community": "^35.0.0",
+    "rxjs": "^7.4.0"
+  },
+  "peerDependenciesMeta": {
+    "ag-grid-angular": {
+      "optional": true
+    },
+    "ag-grid-community": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "@fontsource/inter": "^5.2.8",
+    "@fontsource/ibm-plex-mono": "^5.2.7",
+    "@oneidentity/iris-ui-icons": "workspace:*",
+    "tslib": "^2.3.0"
+  },
+  "sideEffects": [
+    "./fesm2022/oneidentity-iris-ui-table.mjs"
+  ],
+  "exports": {
+    "./iris-ui.css": {
+      "default": "./iris-ui.css"
+    }
+  }
+}

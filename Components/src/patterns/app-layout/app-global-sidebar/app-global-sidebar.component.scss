@@ -1,0 +1,31 @@
+:host {
+  display: block;
+  height: 100%;
+  border-top: var(--oi-border-width-default) solid var(--oi-border-color-muted);
+}
+
+.iris-app-global-sidebar {
+  display: flex;
+  flex-direction: column;
+  // Hold the expanded width so the column clips the nav instead of squeezing it while collapsing.
+  width: var(--iris-app-layout-sidebar-expanded-width, 256px);
+  height: 100%;
+}
+
+.iris-app-global-sidebar__content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--oi-spacing-s);
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--oi-spacing-s) 0 0 var(--oi-spacing-s);
+}
+
+.iris-app-global-sidebar__footer {
+  flex: 0 0 auto;
+  padding: var(--oi-spacing-s);
+  color: var(--oi-content-color-tertiary);
+  font-size: 12px;
+  line-height: 16px;
+}

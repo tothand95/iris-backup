@@ -1,0 +1,30 @@
+<div class="iris-app-layout" [class.iris-app-layout--collapsed]="collapsed()" [class.iris-app-layout--resizing]="resizing()">
+  <header class="iris-app-layout__topbar">
+    <div class="iris-app-layout__product">
+      <ng-content select="iris-app-product-switcher" />
+    </div>
+    <ng-content select="iris-app-global-header" />
+  </header>
+  <aside class="iris-app-layout__sidebar">
+    <ng-content select="iris-app-global-sidebar" />
+  </aside>
+  @if (resizable() && !collapsed()) {
+    <div
+      class="iris-app-layout__resizer"
+      role="separator"
+      tabindex="0"
+      aria-orientation="vertical"
+      [attr.aria-label]="resizeLabel()"
+      [attr.aria-valuenow]="sidebarWidth()"
+      [attr.aria-valuemin]="minSidebarWidth"
+      [attr.aria-valuemax]="maxSidebarWidth"
+      (pointerdown)="onResizeStart($event)"
+      (pointermove)="onResizeMove($event)"
+      (pointerup)="onResizeEnd($event)"
+      (pointercancel)="onResizeEnd($event)"
+      (keydown)="onResizeKeydown($event)"></div>
+  }
+  <main class="iris-app-layout__content" tabindex="-1">
+    <ng-content />
+  </main>
+</div>

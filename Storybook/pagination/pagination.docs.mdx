@@ -1,0 +1,146 @@
+{/* Copyright © 2026 One Identity LLC. ALL RIGHTS RESERVED. */}
+import { Meta, Canvas, ArgTypes, Controls } from '@storybook/addon-docs/blocks';
+import * as PaginationStories from './pagination.stories';
+
+<Meta of={PaginationStories} />
+
+# Pagination
+
+Breaks a long list into pages and lets people move through it — step forward and back, or jump straight to a particular page. Use it wherever showing everything at once would be slow to load or hard to scan.
+
+## When to use
+
+| Type | Use when |
+| -------------- | ----------------------------------------------------------------------------- |
+| **Default** | Users need direct access to specific pages. |
+| **Simplified** | Only previous/next navigation is needed, or the collection cannot be counted. |
+
+## Interactive demo
+
+<Canvas of={PaginationStories.Overview} />
+<Controls of={PaginationStories.Overview} />
+
+## Default
+
+Default mode renders Previous, numbered page buttons, and Next. The first and last page are always present. When `totalPages` is greater than `maxVisiblePages + 2`, the middle range is collapsed with separator items.
+
+<Canvas of={PaginationStories.Default} />
+
+## Simplified
+
+Simplified mode renders only Previous and Next buttons with visible text labels.
+
+<Canvas of={PaginationStories.Simplified} />
+
+## Navigation bounds
+
+Previous is disabled on the first page. Next is disabled on the last page. Clicking the current page button does nothing.
+
+<Canvas of={PaginationStories.FirstPage} />
+<Canvas of={PaginationStories.MiddlePage} />
+<Canvas of={PaginationStories.LastPage} />
+
+## Few pages
+
+When `totalPages <= maxVisiblePages + 2`, every page number is shown and no separators are inserted.
+
+<Canvas of={PaginationStories.FewPages} />
+
+## Cursor paged collections
+
+A keyset/cursor api pages forward only and deliberately reports no total — counting a large collection costs as much as reading it, and the number is stale on arrival. Bind `hasNext` (and `hasPrevious` where the api supports it) instead of `totalPages`:
+
+```html
+<iris-pagination
+  type="simplified"
+  [currentPage]="page()"
+  [hasNext]="hasNext()"
+  [loading]="loading()"
+  [showPosition]="true"
+  (pageChange)="onPageChange($event)" />
+```
+
+Binding `hasNext` or `hasPrevious` — one is enough — changes where the component gets its answer to "is there another page?": from your flag instead of from a count. It does not change the layout, so set `type="simplified"` yourself. While either flag is bound:
+
+- `totalPages` is ignored, and `pageChange` reports `totalPages: undefined`. An unset `hasNext` means "no cursor came back", never "fall back to the count".
+- `goToPage()` is inert, so the component never hands back a destination the consumer cannot reach.
+- `type` still has to be `simplified`. Numbered buttons address pages the consumer has no way to fetch, and leaving it at `default` renders a lone page button built from the ignored `totalPages` — the component warns about this in development builds but does not override the input.
+
+Act on `reason`, not `page`:
+
+```ts
+protected onPageChange(event: PaginationChangeEvent): void {
+  if (event.reason === 'next') {
+    this.store.nextPage();
+  } else if (event.reason === 'previous') {
+    this.store.previousPage();
+  }
+}
+```
+
+<Canvas of={PaginationStories.CursorPaged} />
+
+## Loading
+
+Every page change against a remote source is a round trip. `loading` disables all controls — absorbing double clicks without a guard in the consumer — and sets `aria-busy="true"` on the `<nav>`.
+
+<Canvas of={PaginationStories.Loading} />
+
+## Position indicator
+
+`showPosition` renders the current position between the Previous and Next buttons of `type="simplified"`, which otherwise gives no feedback that anything changed. It reads `Page 3 of 10` when a total is known and `Page 3` when it is not.
+
+<Canvas of={PaginationStories.WithPosition} />
+
+## Accessibility
+
+- The root element is `<nav>` with an accessible label. The label defaults to `"Pagination"`; override `ariaLabel` when a page has multiple navigation landmarks or when a localized label is needed.
+- The active page button gets `aria-current="page"`.
+- While `loading` is set, the `<nav>` carries `aria-busy="true"` and every control is disabled.
+- The position indicator is an `aria-live="polite"` region, so the new position is announced after a page loads.
+- In default mode, Previous and Next use labeled icons (`Previous page` and `Next page`).
+- In simplified mode, the visible `Previous` and `Next` text provides the accessible name.
+- The component does not implement custom keyboard shortcuts; it relies on native button behaviour.
+
+## API
+
+`iris-pagination` is a controlled component. It renders navigation UI from `currentPage`, `totalPages`, `maxVisiblePages`, and `type`, then emits `pageChange` when the user asks for a different page. It does not update `currentPage` internally — reflect the change back through the input.
+
+<ArgTypes of={PaginationStories} sort="alpha" />
+
+### PaginationChangeEvent
+
+Emitted by `pageChange` whenever the user navigates to a different page. All page values are 1-based.
+
+| Property | Type | Description |
+|---|---|---|
+| `page` | `number` | The requested next page. Meaningless for a cursor source — switch on `reason` instead. |
+| `previousPage` | `number` | The page that was active before the interaction. |
+| `totalPages` | `number \| undefined` | Total pages at the time of emission, or `undefined` for a cursor source. |
+| `reason` | `'next' \| 'previous' \| 'jump'` | Which control the user activated. `jump` is a numbered page button. |
+
+### Choosing inputs
+
+| Input | Counted source | Cursor source |
+|---|---|---|
+| `totalPages` | required | ignored |
+| `maxVisiblePages` | optional | not applicable |
+| `hasNext` / `hasPrevious` | leave unset | required |
+| `type` | `default` or `simplified` | `simplified` |
+| `currentPage`, `loading`, `showPosition`, `ariaLabel` | optional | optional |
+
+### Localization
+
+`showPosition` adds one key to the label map. It is a function rather than a string so that word order and separators stay translatable:
+
+| Key | Signature | Renders |
+|---|---|---|
+| `pagination.position` | `(current: number, total: number \| undefined) => string` | `Page 3 of 10`, or `Page 3` when no total is known |
+
+```ts
+provideIrisUiLocalization({
+  labels: {
+    'pagination.position': (current, total) => (total === undefined ? `${current}. oldal` : `${current}. oldal, összesen ${total}`)
+  }
+});
+```

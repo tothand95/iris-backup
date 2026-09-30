@@ -1,0 +1,55 @@
+:host {
+  display: inline-flex;
+}
+
+.iris-app-product-switcher {
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  height: 32px;
+  gap: var(--oi-spacing-xs);
+  padding: 0px;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--oi-border-radius-default);
+  background-color: transparent;
+  color: var(--oi-content-color-primary);
+  font-family: var(--oi-font-family-default);
+  font-size: var(--oi-font-size-s);
+  line-height: var(--oi-line-height-s);
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--oi-background-color-secondary);
+  }
+
+  &:focus-visible {
+    outline: var(--oi-focus-ring);
+    outline-offset: var(--oi-spacing-xs);
+  }
+
+  &--logo-only {
+    justify-content: center;
+    width: 32px;
+    padding: 0;
+  }
+}
+
+.iris-app-product-switcher__logo {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--oi-border-radius-default);
+  object-fit: contain;
+}
+
+.iris-app-product-switcher__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-align: left;
+  padding-left: var(--oi-spacing-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

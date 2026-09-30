@@ -1,0 +1,13 @@
+storybook-static/
+.angular/
+dist/
+
+.vscode/
+coverage/
+node_modules/
+*.md
+*.mdx
+*.yml
+*.yaml
+
+Tokens/src/*.json

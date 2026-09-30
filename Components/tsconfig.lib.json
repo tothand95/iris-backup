@@ -1,0 +1,19 @@
+/* To learn more about Typescript configuration file: https://www.typescriptlang.org/docs/handbook/tsconfig-json.html. */
+/* To learn more about Angular compiler options: https://angular.dev/reference/configs/angular-compiler-options. */
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../out-tsc/lib",
+    "declaration": true,
+    "declarationMap": true,
+    "types": [],
+    // The primary entry point imports @oneidentity/iris-ui/i18n, which the root
+    // tsconfig maps to Components/i18n/src. Keeping rootDir at "src" puts that
+    // file outside the program root and trips TS6059 in the editor. ng-packagr
+    // generates its own rootDir per entry point, so widening it here is
+    // editor-only and does not affect the published output.
+    "rootDir": "."
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["**/*.spec.ts"]
+}

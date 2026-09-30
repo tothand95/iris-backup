@@ -1,0 +1,162 @@
+{/* Copyright © 2026 One Identity LLC. ALL RIGHTS RESERVED. */}
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as TableStories from './table.stories';
+
+<Meta of={TableStories} />
+
+# Table
+
+There is no `iris-table` Angular component in current library. Storybook examples mount AG Grid Angular directly and apply Iris theme export from `Components/table/src/table.model.ts`.
+
+## Import path
+
+Everything table-related ships from the secondary entry point `@oneidentity/iris-ui/table`, **not** from the package root. This keeps AG Grid out of the root module graph, so applications that never render a table do not bundle it.
+
+```typescript
+import { irisTheme } from '@oneidentity/iris-ui/table';
+```
+
+Everything else — `ColDef`, `GridOptions`, `ICellRendererParams`, `ICellRendererAngularComp` and so on — comes straight from AG Grid, since you are using AG Grid's own component and API:
+
+```typescript
+import { AgGridAngular } from 'ag-grid-angular';
+import type { ColDef, GridOptions } from 'ag-grid-community';
+```
+
+Install the AG Grid peer dependencies alongside it:
+
+```bash
+pnpm add ag-grid-angular ag-grid-community
+```
+
+## What Iris ships
+
+Current table entry point:
+
+- registers `AllCommunityModule` with AG Grid
+- exports `irisTheme`, based on AG Grid `themeQuartz`
+
+All sorting, filtering, pagination, selection, cell rendering, keyboard behavior, and ARIA behavior come from AG Grid itself.
+
+## API reference
+
+Use standard [AG Grid Angular documentation](https://www.ag-grid.com/angular-data-grid/getting-started/) for grid features and configuration.
+
+## Interactive demo
+
+<Canvas of={TableStories.Overview} />
+
+## Cell renderers
+
+A **cell renderer** is standalone Angular component that AG Grid instantiates for one cell. Implement `ICellRendererAngularComp` and provide `agInit` plus `refresh`.
+
+Use signals for reactive state.
+
+```typescript
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ICellRendererAngularComp } from 'ag-grid-angular';
+import type { ICellRendererParams } from 'ag-grid-community';
+
+@Component({
+  selector: 'story-table-status-cell',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `<span>{{ value() }}</span>`,
+  styles: [
+    `
+      :host {
+        display: flex;
+        align-items: center;
+        height: 100%;
+      }
+    `,
+  ],
+})
+export class StatusCellRenderer implements ICellRendererAngularComp {
+  value = signal('');
+
+  agInit(params: ICellRendererParams): void {
+    this.value.set(params.value ?? '');
+  }
+
+  refresh(params: ICellRendererParams): boolean {
+    this.value.set(params.value ?? '');
+    return true;
+  }
+}
+```
+
+Register renderer in column definition:
+
+```typescript
+const columnDefs: ColDef[] = [{ field: 'status', cellRenderer: StatusCellRenderer }];
+```
+
+## Header renderers
+
+A **header renderer** is standalone Angular component that replaces default column header. Implement `IHeaderAngularComp`. Extend `IHeaderParams` for custom params passed through `headerComponentParams`.
+
+```typescript
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { IrisIconComponent } from '@oneidentity/iris-ui';
+import { IHeaderAngularComp } from 'ag-grid-angular';
+import type { IHeaderParams } from 'ag-grid-community';
+
+interface IconHeaderParams extends IHeaderParams {
+  iconName: string;
+}
+
+@Component({
+  selector: 'story-table-icon-header',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [IrisIconComponent],
+  template: `<iris-icon [name]="iconName()" [size]="20" /><span>{{ label() }}</span>`,
+  styles: [
+    `
+      :host {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+    `,
+  ],
+})
+export class IconHeaderRenderer implements IHeaderAngularComp {
+  iconName = signal('');
+  label = signal('');
+
+  agInit(params: IconHeaderParams): void {
+    this.iconName.set(params.iconName ?? '');
+    this.label.set(params.displayName ?? '');
+  }
+
+  refresh(params: IconHeaderParams): boolean {
+    this.iconName.set(params.iconName ?? '');
+    this.label.set(params.displayName ?? '');
+    return true;
+  }
+}
+```
+
+Register in column definition with optional custom params:
+
+```typescript
+const columnDefs: ColDef[] = [
+  {
+    field: 'name',
+    headerComponent: IconHeaderRenderer,
+    headerComponentParams: { iconName: 'User' },
+  },
+];
+```
+
+## Accessibility
+
+Iris does not add wrapper-specific ARIA or keyboard logic here. Validate accessibility against AG Grid configuration you ship.
+
+### Table exports
+
+| Export | Type | Description |
+|---|---|---|
+| `irisTheme` | `Theme` | Iris theme parameters layered on AG Grid Quartz theme. |

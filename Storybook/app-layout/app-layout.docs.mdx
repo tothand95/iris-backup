@@ -1,0 +1,161 @@
+{/* Copyright © 2026 One Identity LLC. ALL RIGHTS RESERVED. */}
+import { ArgTypes, Canvas, Controls, Meta } from '@storybook/addon-docs/blocks';
+import * as AppLayoutStories from './app-layout.stories';
+
+<Meta of={AppLayoutStories} />
+
+# App layout
+
+App layout provides the shell around One Identity product pages. It contains a fixed top bar, an optional primary sidebar, and a scrollable content region. It manages the expanded or collapsed sidebar state, supports the Ctrl/Cmd+B shortcut without interfering with text entry, and exposes slots for product identity, page title or breadcrumbs, header actions, navigation groups, and sidebar footer content.
+
+## When to use
+
+| Type | Use when |
+| --- | --- |
+| **Expanded** | Primary navigation should be visible beside page content. |
+| **Collapsed** | Content needs the full width while the header remains available. |
+| **Logo only** | The product identity area should not offer a product menu. Activating the logo emits `logoClick`. |
+| **With product switcher** | Users can change between related products from the header. |
+
+## Layout structure
+
+The shell is a 2×2 CSS grid: two columns and two rows. The top row holds the top bar, the left column holds the sidebar, and a flexible content region fills the remaining space. Each of the four cells is a projection slot filled by a dedicated child component.
+
+```
+┌──────────────────────┬────────────────────────────────────┐
+│  Product switcher    │          Top bar                   │  ← row 1: header bar
+├──────────────────────┼────────────────────────────────────┤
+│  Sidebar menu        │          Content                   │  ← row 2: 1fr (fills height)
+│                      │                                    │
+│                      │                                    │
+│                      │                                    │
+│                      │                                    │
+│                      │                                    │
+└──────────────────────┴────────────────────────────────────┘
+   256px default rail      1fr flexible region
+   (drag edge to resize)
+```
+
+The column edge between the sidebar and the content is a drag handle. Hovering it shows a `col-resize` cursor, and dragging it changes the rail width within a fixed `210px`–`340px` range. When you drag the handle within 100px of the layout's left edge, the layout collapses and the drag ends. The layout keeps the previous width for the next expand. The handle is focusable. `←`/`→` resize in 16px steps, and `Home`/`End` jump to the minimum or maximum. Bind `[(sidebarWidth)]` to persist the width, or set `[resizable]="false"` to pin the rail.
+
+| Cell | Grid position | Slot / component | Purpose | How to use |
+| --- | --- | --- | --- | --- |
+| **Product switcher** | col 1, row 1 | App layout projects the `iris-app-product-switcher` component into this slot | Product logo, active product name, and product menu, aligned above the sidebar. | Inside `iris-app-layout` define a single `iris-app-product-switcher`. Pass `[products]` for the switcher menu, or omit them for a logo-only identity button. A single product renders as logo + name without the dropdown. It fills the rail width when expanded. The default width is 256px, and you can adjust it by dragging the sidebar resizer. When the layout is collapsed it renders a compact form with the logo and caret only in the top bar, so you do not need a second element. |
+| **Top bar** | col 2, row 1 |  App layout projects the `iris-app-global-header` component into this slot | Sidebar toggle, page title / breadcrumb slot, and right-hand actions. | Inside `iris-app-layout` define an `iris-app-global-header` component. Put a title or `iris-breadcrumb` in `[appGlobalHeaderContent]` and override the default actions, which are search, notifications, AI CTA, and avatar, with `[appGlobalHeaderActions]`. |
+| **Sidebar** | col 1, row 2 | App layout projects the `iris-app-global-sidebar` component into this slot | Primary navigation groups and an optional footer slot. | Inside `iris-app-layout` define an `iris-app-global-sidebar` component with nav groups/items, either template-driven or through the `groups` input. The sidebar hides entirely when the layout collapses. |
+| **Content** | col 2, row 2 | App layout projects the remaining content into this (`<ng-content>`) | The scrollable page body, wrapped in a padded content card. | Use this for the content of your application, for example `router-outlet`. This cell scrolls individually. The top bar and sidebar stay fixed. |
+
+### Collapsed behavior
+
+When `collapsed` is set, the rail animates to zero width. The sidebar is clipped away and then removed from the tab order while the content cell grows into the freed space. The product switcher stays at the left edge of the top bar and renders compact, so the product identity and the toggle never shift position between states. The transition uses `--oi-motion-duration-short`. The layout skips it while the resize handle is dragged and under `prefers-reduced-motion: reduce`.
+
+### Usage
+
+Project the three cell components and place your routed page in the default content slot. Declare the `iris-app-product-switcher` one time. The layout renders it full above the sidebar when expanded and compact in the top bar when collapsed. A `router-outlet` is the recommended way to fill the content cell so navigation swaps only the scrollable body while the top bar and sidebar stay fixed.
+
+```html
+<iris-app-layout [(collapsed)]="collapsed">
+  <!-- Product switcher (auto-compacts when the layout is collapsed) -->
+  <iris-app-product-switcher [products]="products" [activeId]="activeProductId" />
+
+  <!-- Top bar -->
+  <iris-app-global-header>
+    <iris-breadcrumb appGlobalHeaderContent [items]="breadcrumbs" />
+  </iris-app-global-header>
+
+  <!-- Sidebar (using the groups input; can be template-driven also) -->
+  <iris-app-global-sidebar [groups]="navGroups" [activeId]="activeNavId" (itemSelected)="onNavigate($event)" />
+
+  <!-- Content; routed page renders here -->
+  <router-outlet />
+</iris-app-layout>
+```
+
+## Interactive demo
+
+<Canvas of={AppLayoutStories.Expanded} />
+<Controls of={AppLayoutStories.Expanded} />
+
+## Sub-component APIs
+
+The layout is assembled from the components below. `model` properties are two-way bindable (for example `[(expanded)]`) and also emit a matching `...Change` output.
+
+### `iris-app-product-switcher`
+
+| Property | Kind | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `compact` | input | `boolean` | `false` | Forces the compact form, which shows the logo and caret. Auto-enabled while the enclosing layout is collapsed. |
+| `products` | input | `AppProduct[]` | `[]` | Products for the switcher menu. With a single product it renders the logo and name only, with no caret and no menu. When empty, renders the logo only. |
+| `activeId` | input | `string` | `''` | Id of the active product. Falls back to the first product. |
+| `logoSrc` | input | `string` | `''` | Custom logo image URL. Defaults to the built-in mark. |
+| `productChange` | output | `AppProduct` | — | Emitted when a product is selected from the menu. |
+| `logoClick` | output | `void` | — | Emitted when the product identity is activated and there are fewer than two products. Handle navigation in the consuming app. |
+
+### `iris-app-global-header`
+
+| Property | Kind | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `sidebarToggleAriaLabel` | input | `string` | `'Toggle sidebar'` | Accessible label for the sidebar toggle button. |
+| `sidebarToggle` | output | `void` | — | Emitted when the toggle is activated and no enclosing `iris-app-layout` handles it. |
+
+The header provides two content slots. Use `[appGlobalHeaderContent]` for a title or breadcrumb, and `[appGlobalHeaderActions]` for the right-hand actions. Right-hand actions default to search, notifications, AI CTA, and avatar.
+
+### `iris-app-global-sidebar`
+
+| Property | Kind | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `ariaLabel` | input | `string` | `'Primary'` | Label applied to the `nav` element. |
+| `groups` | input | `AppNavGroup[]` | `[]` | Data-driven nav groups, rendered before any projected content. |
+| `activeId` | input | `string` | `''` | Id of the active data-driven nav item. |
+| `itemSelected` | output | `string` | — | Emitted with the id of a selected data-driven nav item. |
+
+You can also project template-driven groups and items as content. `[appGlobalSidebarFooter]` projects optional footer content. The layout clips and hides this content when it collapses.
+
+### `iris-app-nav-group`
+
+| Property | Kind | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `label` | input | `string` | `''` | Optional group header label. |
+| `collapsible` | input | `boolean` | `false` | Renders the header as a collapsible toggle. |
+| `expanded` | model | `boolean` | `true` | Two-way expanded state (only relevant when `collapsible`). |
+
+### `iris-app-nav-expandable`
+
+| Property | Kind | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `label` | input (required) | `string` | — | Item label. |
+| `icon` | input | `string` | `''` | Optional leading icon name. |
+| `expanded` | model | `boolean` | `false` | Two-way expanded state for the child items. |
+
+### `iris-app-nav-item`
+
+| Property | Kind | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `label` | input (required) | `string` | — | Item label. |
+| `icon` | input | `string` | `''` | Optional leading icon name. |
+| `active` | input | `boolean` | `false` | Marks the item active (`aria-current="page"`). |
+| `disabled` | input | `boolean` | `false` | Disables the item and removes it from the tab order. |
+| `href` | input | `string` | `''` | Renders the item as an anchor to this URL. |
+| `child` | input | `boolean` | `false` | Renders as an indented child (auto-set inside `iris-app-nav-expandable`). |
+| `select` | output | `void` | — | Emitted when an enabled item is activated. |
+
+### `iris-app-ai-cta`
+
+| Property | Kind | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `label` | input | `string` | `'Ask AI'` | Pill label. |
+| `disabled` | input | `boolean` | `false` | Disables the CTA. |
+| `activate` | output | `void` | — | Emitted when the CTA is activated. |
+
+## Accessibility
+
+- Sidebar navigation renders as a labeled `nav`.
+- The sidebar toggle exposes `aria-expanded`, and its icon reflects the current state with `SidebarExpanded` or `SidebarCollapsed`.
+- Active navigation items expose `aria-current="page"`.
+- The layout removes disabled navigation items from the tab order.
+- The identity button exposes the product name, or a generic home label, as its accessible name.
+- The sidebar resizer is a focusable `separator` with `aria-valuenow` / `aria-valuemin` / `aria-valuemax` and arrow-key support.
+
+## `iris-app-layout` API
+
+<ArgTypes of={AppLayoutStories} sort="alpha" />

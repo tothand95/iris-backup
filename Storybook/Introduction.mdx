@@ -1,0 +1,219 @@
+{/* Copyright © 2026 One Identity LLC. ALL RIGHTS RESERVED. */}
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Iris UI / Introduction" />
+
+# Iris UI
+
+One Identity's Angular component library. It gives every One Identity product a shared set of consistent, accessible, and scalable foundations, components, and patterns.
+
+A component reaches `Stable` status only after it passes engineering review and UX validation. Stable components conform to WCAG 2.2 Level AA by default. High contrast themes cover the full WCAG 2.0, 2.1, and 2.2 spectrum at all levels: A, AA, and AAA.
+
+Iris UI exposes the full design token system as CSS custom properties (`--oi-*`), so your styles reference the system directly instead of hardcoded values. Fonts and 1,500+ icons ship with the package. Nothing extra to configure.
+
+## Requirements
+
+Iris UI targets Angular 20, 21, and 22. The peer ranges are declared as `^20.0.0 || ^21.0.0 || ^22.0.0` for `@angular/core`, `common`, `forms`, `router`, `platform-browser`, and `@angular/cdk`; `rxjs` is `^7.4.0`. Components are standalone and zoneless-ready — they use signals and `OnPush` throughout and never depend on `zone.js`.
+
+`ag-grid-angular` and `ag-grid-community` are **optional** peers pinned to `^35.0.0`. They are only resolved when you import the `@oneidentity/iris-ui/table` entry point, so an application that does not use the Table never installs them.
+
+## How to set up
+
+Follow these steps to integrate Iris UI into your product application.
+
+### 0. Configure the registry
+
+`@oneidentity/iris-ui` is published to the One Identity Azure Artifacts feed. Before installing, connect your project to the feed by following the setup instructions on the [OneIdentity Azure DevOps Artifacts page](https://dev.azure.com/1id/_artifacts/feed/OneIdentity/connect).
+
+### 1. Install the package
+
+`@angular/cdk` is a required peer dependency for the overlay-based popover, menu, and tooltip components. `@oneidentity/iris-ui-tokens` provides the design tokens compiled into the global stylesheet. Install both alongside the library.
+
+```bash
+npm install @oneidentity/iris-ui @oneidentity/iris-ui-tokens @angular/cdk
+# or
+pnpm add @oneidentity/iris-ui @oneidentity/iris-ui-tokens @angular/cdk
+```
+
+If you use the **Table**, also install the AG Grid peer dependencies. They are only needed for the `@oneidentity/iris-ui/table` entry point — the package root never imports AG Grid:
+
+```bash
+npm install ag-grid-angular ag-grid-community
+# or
+pnpm add ag-grid-angular ag-grid-community
+```
+
+Table exports then come from the secondary entry point, while grid types and the grid component itself come from AG Grid directly:
+
+```ts
+import { irisTheme } from '@oneidentity/iris-ui/table';
+import { AgGridAngular } from 'ag-grid-angular';
+import type { ColDef, GridOptions } from 'ag-grid-community';
+```
+
+### 2. Use styles and tokens
+
+Add the library stylesheet to the `styles` array in your `angular.json`. The stylesheet loads the fonts, registers all design tokens as CSS custom properties, and applies the base resets and global typography. No additional configuration is required.
+
+```json
+// angular.json
+"styles": [
+  "node_modules/@oneidentity/iris-ui/iris-ui.css"
+]
+```
+
+It can also be referenced by specifier instead of by path, e.g. from a global stylesheet:
+
+```css
+@import '@oneidentity/iris-ui/iris-ui.css';
+```
+
+> **`iris-ui.css` is the only supported entry point for the fonts.** It is the sole file in either package that imports the eight `@fontsource` stylesheets — the token partials below contain no `@font-face` rules. If you skip it, the app still renders and nothing errors, but `--oi-font-family-default` falls back to `system-ui`. A correct setup emits 8 `woff2` files (173.2 kB) into your build output; a token-only setup emits none.
+
+Every `--oi-*` token is then available as a CSS custom property anywhere in your app:
+
+```css
+.my-element {
+  color: var(--oi-content-color-primary);
+  background: var(--oi-background-color-secondary);
+  border-radius: var(--oi-border-radius-default);
+}
+```
+
+#### Specific token usage
+
+Token partials are an **addition** to `iris-ui.css`, not a replacement for it. `@oneidentity/iris-ui` itself ships no SCSS — only the compiled `iris-ui.css`. The SCSS sources live in `@oneidentity/iris-ui-tokens`, which ships every token group twice: as a `.scss` partial and as a compiled `.css` file.
+
+The partials expose **no Sass API** — no `$` variables, maps, functions, or mixins. Each one is a block of CSS custom property declarations that happens to carry a `.scss` extension, so a token is still read as `var(--oi-*)` and cannot be fed into compile-time Sass math or colour functions. For everyday styling, reference the custom property directly; it needs no import at all:
+
+```scss
+.my-element {
+  color: var(--oi-content-color-primary);
+}
+```
+
+Reach for the partials only when a stylesheet must register the custom properties itself — a shadow root, or a standalone bundle that never loads `iris-ui.css`. Add `stylePreprocessorOptions` to your `angular.json` so the SCSS compiler can resolve the package, then import the barrel:
+
+```json
+// angular.json
+"stylePreprocessorOptions": {
+  "includePaths": ["node_modules"]
+}
+```
+
+```scss
+@use '@oneidentity/iris-ui-tokens/dist/tokens' as tokens;
+```
+
+> **`@use`-ing the barrel emits roughly 23 kB of CSS into the consuming file**, because the partials are declarations rather than definitions. In a component-scoped Angular stylesheet that repeats the entire token set once per component. Import it once globally, or not at all.
+
+The barrel (`dist/_tokens.scss`) forwards all seven partials — `primitives`, `typography`, the four themes, and `custom`. Importing more than one partial directly fails, because they all share the basename `tokens` and Sass rejects the second with `There's already a module with namespace "tokens"` — a single partial is fine if you alias it:
+
+```scss
+@use '@oneidentity/iris-ui-tokens/dist/_tokens.primitives' as *;
+```
+
+The same groups also ship as plain CSS (`dist/tokens.primitives.css`, `dist/tokens.light.css`, and so on) behind the `dist/tokens.css` barrel, which is what `iris-ui.css` imports. The `.scss` and `.css` forms carry identical content, so choose whichever your pipeline loads more naturally.
+
+> Note: When using token primitives, ensure the colors meet accessibility requirements across all themes.
+
+### 3. Apply a theme
+
+Iris UI includes four themes. Activate a theme by adding one of the following classes to your root element:
+
+- Light: `theme-light`
+- Dark: `theme-dark`
+- High contrast light: `theme-hc-light`
+- High contrast dark: `theme-hc-dark`
+
+All components adapt automatically. Add a theme class to your root element.
+
+```html
+<!-- index.html -->
+<body class="theme-light">...</body>
+```
+
+Use the **Theme** picker in the Storybook toolbar to preview all themes live.
+
+### 4. Import components
+
+All components are standalone. Import them directly into your Angular component.
+
+```ts
+import { IrisButtonComponent } from '@oneidentity/iris-ui';
+```
+
+### 5. Verify the setup
+
+Render a button in a component template, then run your application. The button appears with Iris UI styles, which confirms the setup works.
+
+```ts
+import { Component } from '@angular/core';
+import { IrisButtonComponent } from '@oneidentity/iris-ui';
+
+@Component({
+  selector: 'app-root',
+  imports: [IrisButtonComponent],
+  template: `<iris-button variant="primary">Get started</iris-button>`,
+})
+export class AppComponent {}
+```
+
+### 6. Localize the accessibility labels
+
+Components that have no visible text — the dismiss button of a toast, the expand chevron of a tree node — render a built-in English accessible name. Replace the whole set at once with `provideIrisUiLocalization()` from the `@oneidentity/iris-ui/i18n` entry point rather than passing an `aria-label` per instance.
+
+```ts
+// app.config.ts
+import { provideIrisUiLocalization } from '@oneidentity/iris-ui/i18n';
+
+export const appConfig: ApplicationConfig = {
+  providers: [provideIrisUiLocalization({ labels: { 'toast.dismiss': 'Schließen' } })]
+};
+```
+
+Labels also accept signals, so they can follow the active language of your i18n library at runtime. See [Localization](?path=/docs/iris-ui-localization--documentation) for the full key reference and the translation service setup.
+
+## Component status
+
+<style>{`
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    height: var(--oi-size-s);
+    padding: 0 var(--oi-spacing-xs);
+    border-radius: var(--oi-border-radius-default);
+    border: none;
+    font-family: var(--oi-font-family-default);
+    font-size: var(--oi-font-size-s);
+    font-weight: var(--oi-font-weight-400);
+    line-height: var(--oi-line-height-s);
+    color: var(--oi-content-color-constant);
+    white-space: nowrap;
+  }
+  .status-badge--stable    { background-color: var(--oi-base-color-success); }
+  .status-badge--preview   { background-color: var(--oi-base-color-warning); color: var(--oi-content-color-primary); }
+  .status-badge--untouched { background-color: var(--oi-base-color-error); }
+`}</style>
+
+<table>
+  <tbody>
+    <tr>
+      <td><span className="status-badge status-badge--untouched">Untouched</span></td>
+      <td>Automatically generated from the Figma design without developer review. Behavior, accessibility, and API may be incomplete or incorrect. Not suitable for use in product applications.</td>
+    </tr>
+    <tr>
+      <td><span className="status-badge status-badge--preview">Preview</span></td>
+      <td>Functional requirements defined and incorporated into the implementation. Not yet validated by UX. API may still change; use with caution.</td>
+    </tr>
+    <tr>
+      <td><span className="status-badge status-badge--stable">Stable</span></td>
+      <td>Reviewed and approved by the development team; validated by the UX team. Safe to use in product applications.</td>
+    </tr>
+  </tbody>
+</table>
+
+## Support
+
+For help with Iris UI, join the [Guild - Iris UI](https://teams.microsoft.com/l/channel/19%3AbpUVelfCdB6-hgAFUyWnwyJhJNcgUs5UxpiT9HSY0vY1%40thread.tacv2/General?groupId=af0cc901-73ff-452a-87a9-0f5887428c9a&tenantId=91c369b5-1c9e-439c-989c-1867ec606603) Teams channel to ask questions, share feedback, or start a conversation with our team. Our team works across time zones, so some answers take longer, but we reply as soon as we can.
+

@@ -1,0 +1,22 @@
+<button class="iris-app-nav-expandable" type="button" [attr.aria-expanded]="expanded()" (click)="toggle()">
+  @if (icon(); as iconName) {
+    <iris-icon class="iris-app-nav-expandable__icon" [name]="iconName" [size]="16" [decorative]="true" />
+  }
+  <span class="iris-app-nav-expandable__label">{{ label() }}</span>
+  <iris-icon
+    class="iris-app-nav-expandable__caret"
+    [class.iris-app-nav-expandable__caret--expanded]="expanded()"
+    name="CaretDown"
+    [size]="16"
+    [decorative]="true" />
+</button>
+
+<div
+  class="iris-app-nav-expandable__children"
+  [class.iris-app-nav-expandable__children--expanded]="expanded()"
+  [attr.aria-hidden]="!expanded()"
+  [attr.inert]="!expanded() ? '' : null">
+  <div class="iris-app-nav-expandable__children-inner">
+    <ng-content select="iris-app-nav-item" />
+  </div>
+</div>

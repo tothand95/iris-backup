@@ -1,0 +1,263 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pr: none
+
+parameters:
+  - name: releaseTokens
+    displayName: 'Publish tokens (stable release, manual only)'
+    type: boolean
+    default: false
+
+  - name: releaseIcons
+    displayName: 'Publish icons (stable release, manual only)'
+    type: boolean
+    default: false
+
+  - name: releaseComponents
+    displayName: 'Publish components (stable release, manual only)'
+    type: boolean
+    default: false
+
+resources:
+  repositories:
+    - repository: pipelinetools
+      type: git
+      name: Starling/Pipeline-Tools
+
+variables:
+  - template: templates/variables.yml@pipelinetools
+
+stages:
+  # ──────────────────────────────────────────────────────
+  # Version Validation — lint, test & build once per Angular
+  # major in the Components/package.json peer range. PR
+  # validation is handled on GitHub
+  # (.github/workflows/pull-request.yml); this pipeline is
+  # release-only.
+  #
+  # Always runs: every run of this pipeline publishes a
+  # components package (a preview on an ordinary main push, a
+  # stable release when requested), so the peer range is
+  # always being asserted. It gates every publish in the run,
+  # so a batch release cannot ship tokens and icons while
+  # components are broken. A failure means the range is wrong:
+  # fix the library or narrow the range, do not mute the job.
+  # ──────────────────────────────────────────────────────
+  - stage: VersionValidation
+    displayName: 'Version Validation'
+    jobs:
+      - job: AngularCompat
+        displayName: 'Angular'
+        pool:
+          vmImage: 'ubuntu-latest'
+        strategy:
+          matrix:
+            # Baseline: the versions the lockfile pins, installed verbatim, so
+            # this row also proves the lockfile is in sync with the manifest.
+            v20:
+              angularMajor: '20'
+              pinToolchain: 'false'
+              tsVersion: ''
+              vitestVersion: ''
+              testScript: 'test:coverage'
+            v21:
+              angularMajor: '21'
+              pinToolchain: 'true'
+              tsVersion: '~5.9.0'
+              vitestVersion: '^4.0.8'
+              testScript: 'test'
+            v22:
+              angularMajor: '22'
+              pinToolchain: 'true'
+              tsVersion: '~6.0.0'
+              vitestVersion: '^4.0.8'
+              testScript: 'test'
+        steps:
+          - checkout: self
+
+          - task: UseNode@1
+            displayName: 'Install Node.js'
+            inputs:
+              version: '22.x'
+
+          - script: corepack enable
+            displayName: 'Enable corepack / pnpm'
+
+          # Overrides must be written before the first install. See
+          # pipelines/pin-angular-version.mjs for why `pnpm add -w` is not
+          # enough: it leaves Components/node_modules on the old Angular, and
+          # every test then fails on TestBed.initTestEnvironment.
+          - script: node pipelines/pin-angular-version.mjs "$(angularMajor)" "$(tsVersion)" "$(vitestVersion)"
+            displayName: 'Pin Angular $(angularMajor) toolchain'
+            condition: and(succeeded(), eq(variables['pinToolchain'], 'true'))
+
+          - script: pnpm install --frozen-lockfile --ignore-scripts
+            displayName: 'Install dependencies'
+            condition: and(succeeded(), eq(variables['pinToolchain'], 'false'))
+
+          # Not --frozen-lockfile: the overrides deliberately change resolution.
+          # The version echo keeps the two-Angular failure mode obvious in logs.
+          - script: |
+              set -e
+              pnpm install --no-frozen-lockfile --ignore-scripts
+              pnpm ls typescript vitest @angular/core ng-packagr
+              node -e "console.log('Components @angular/core:', require('./Components/node_modules/@angular/core/package.json').version)"
+            displayName: 'Install dependencies (Angular $(angularMajor))'
+            condition: and(succeeded(), eq(variables['pinToolchain'], 'true'))
+
+          - script: pnpm run tokens:build
+            displayName: 'Build tokens'
+
+          - script: pnpm run icons:build
+            displayName: 'Build icons'
+
+          - script: pnpm run lint
+            displayName: 'Lint'
+
+          - script: pnpm run $(testScript)
+            displayName: 'Unit tests'
+
+          - script: pnpm run components:build
+            displayName: 'Build components'
+
+  # ──────────────────────────────────────────────────────
+  # Release Tokens — manual stable publish
+  # ──────────────────────────────────────────────────────
+  - stage: ReleaseTokens
+    displayName: 'Publish Tokens'
+    dependsOn: VersionValidation
+    # succeeded() covers both dependencies, and treats the advisory Angular 22
+    # job's SucceededWithIssues as a pass.
+    condition: and(succeeded(), eq('${{ parameters.releaseTokens }}', true), eq(variables['Build.Reason'], 'Manual'), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - job: PublishTokens
+        displayName: 'Publish tokens package'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - checkout: self
+
+          - task: UseNode@1
+            displayName: 'Install Node.js'
+            inputs:
+              version: '22.x'
+
+          - script: corepack enable
+            displayName: 'Enable corepack / pnpm'
+
+          - script: pnpm install --frozen-lockfile --ignore-scripts
+            displayName: 'Install dependencies'
+
+          - script: pnpm run tokens:build
+            displayName: 'Build tokens'
+
+          - script: |
+              printf 'registry=https://pkgs.dev.azure.com/1id/_packaging/OneIdentity/npm/registry/\nalways-auth=true\n' > Tokens/.npmrc
+            displayName: 'Create publish .npmrc (untracked)'
+
+          - task: npmAuthenticate@0
+            displayName: 'Authenticate to Azure Artifacts'
+            inputs:
+              workingFile: $(Build.SourcesDirectory)/Tokens/.npmrc
+
+          - script: pnpm run tokens:publish
+            displayName: 'Publish to Azure Artifacts'
+
+  # ──────────────────────────────────────────────────────
+  # Release Icons — manual stable publish
+  # ──────────────────────────────────────────────────────
+  - stage: ReleaseIcons
+    displayName: 'Publish Icons'
+    dependsOn: VersionValidation
+    condition: and(succeeded(), eq('${{ parameters.releaseIcons }}', true), eq(variables['Build.Reason'], 'Manual'), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - job: PublishIcons
+        displayName: 'Publish icons package'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - checkout: self
+
+          - task: UseNode@1
+            displayName: 'Install Node.js'
+            inputs:
+              version: '22.x'
+
+          - script: corepack enable
+            displayName: 'Enable corepack / pnpm'
+
+          - script: pnpm install --frozen-lockfile --ignore-scripts
+            displayName: 'Install dependencies'
+
+          - script: pnpm run icons:build
+            displayName: 'Build icons'
+
+          - script: |
+              printf 'registry=https://pkgs.dev.azure.com/1id/_packaging/OneIdentity/npm/registry/\nalways-auth=true\n' > Icons/.npmrc
+            displayName: 'Create publish .npmrc (untracked)'
+
+          - task: npmAuthenticate@0
+            displayName: 'Authenticate to Azure Artifacts'
+            inputs:
+              workingFile: $(Build.SourcesDirectory)/Icons/.npmrc
+
+          - script: pnpm run icons:publish
+            displayName: 'Publish to Azure Artifacts'
+
+  # ──────────────────────────────────────────────────────
+  # Release Components — preview on CI, stable on manual
+  # ──────────────────────────────────────────────────────
+  - stage: ReleaseComponents
+    displayName: 'Publish Components'
+    dependsOn: VersionValidation
+    # Both the preview and the stable publish ship a components package, so
+    # this stage always waits for the Angular version matrix.
+    condition: succeeded()
+    jobs:
+      - job: PublishComponents
+        displayName: 'Publish components package'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - checkout: self
+
+          - task: UseNode@1
+            displayName: 'Install Node.js'
+            inputs:
+              version: '22.x'
+
+          - script: corepack enable
+            displayName: 'Enable corepack / pnpm'
+
+          - script: pnpm install --frozen-lockfile --ignore-scripts
+            displayName: 'Install dependencies'
+
+          - script: pnpm run icons:build
+            displayName: 'Build icons'
+
+          - script: pnpm run components:build
+            displayName: 'Build components'
+
+          - script: pnpm run components:prepublish
+            displayName: 'Resolve workspace: protocol in published manifest'
+
+          - task: npmAuthenticate@0
+            displayName: 'Authenticate to Azure Artifacts'
+            inputs:
+              workingFile: $(Build.SourcesDirectory)/Components/dist/.npmrc
+
+          - script: |
+              cd Components/dist
+              npm version "$(node -p "require('./package.json').version")-preview.$(Build.BuildId)" --no-git-tag-version
+              npm publish --tag preview
+            displayName: 'Publish preview to Azure Artifacts'
+            condition: and(succeeded(), ne('${{ parameters.releaseComponents }}', true))
+
+          - script: |
+              cd Components/dist
+              npm publish
+            displayName: 'Publish stable release to Azure Artifacts'
+            condition: and(succeeded(), eq('${{ parameters.releaseComponents }}', true), eq(variables['Build.Reason'], 'Manual'), eq(variables['Build.SourceBranch'], 'refs/heads/main'))

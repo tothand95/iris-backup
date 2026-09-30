@@ -1,0 +1,8 @@
+<span
+  class="iris-icon"
+  [style.--iris-icon-size.px]="size()"
+  [attr.aria-hidden]="decorative() ? 'true' : null"
+  [attr.role]="decorative() ? null : 'img'"
+  [attr.aria-label]="decorative() ? null : effectiveLabel()"
+  [innerHTML]="svgContent()">
+</span>

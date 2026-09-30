@@ -1,0 +1,35 @@
+:host {
+  display: inline-flex;
+}
+
+.iris-app-ai-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 88px;
+  height: 32px;
+  gap: var(--oi-spacing-xs);
+  padding: 0 10px 0 var(--oi-spacing-s);
+  border: var(--oi-border-width-default) solid var(--oi-border-color-default);
+  border-radius: var(--oi-border-radius-max);
+  background-color: var(--oi-background-color-primary);
+  color: var(--oi-content-color-primary);
+  font-family: var(--oi-font-family-default);
+  font-size: var(--oi-font-size-s);
+  line-height: var(--oi-line-height-s);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background-color: var(--oi-background-color-secondary);
+  }
+
+  &:focus-visible {
+    outline: var(--oi-focus-ring);
+    outline-offset: var(--oi-spacing-xs);
+  }
+
+  &:disabled {
+    color: var(--oi-content-color-tertiary);
+    cursor: not-allowed;
+  }
+}

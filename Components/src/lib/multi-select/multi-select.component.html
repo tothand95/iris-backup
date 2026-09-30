@@ -1,0 +1,46 @@
+<div class="iris-multi-select" role="listbox" aria-multiselectable="true">
+  @if (showSearch()) {
+    <div class="iris-multi-select__search">
+      <iris-text-input leadingIcon="MagnifyingGlass" [placeholder]="searchPlaceholder()" (valueChange)="onSearchInput($event)" />
+    </div>
+  }
+
+  <div class="iris-multi-select__menu">
+    @for (option of filteredOptions(); track option.value) {
+      <button
+        class="iris-multi-select__item"
+        [class.iris-multi-select__item--selected]="isSelected(option.value)"
+        [disabled]="option.disabled ?? false"
+        role="option"
+        [attr.aria-selected]="isSelected(option.value)"
+        [attr.aria-disabled]="option.disabled ?? false"
+        type="button"
+        (click)="toggleOption(option.value)">
+        <iris-checkbox
+          class="iris-multi-select__check"
+          inert
+          aria-hidden="true"
+          [checked]="isSelected(option.value)"
+          [disabled]="option.disabled ?? false" />
+        <span class="iris-multi-select__content">
+          @if (option.icon) {
+            <iris-icon class="iris-multi-select__item-icon" [name]="option.icon" [size]="20" [decorative]="true" />
+          }
+          <span class="iris-multi-select__text">
+            <span class="iris-multi-select__label">{{ option.label }}</span>
+            @if (option.description) {
+              <span class="iris-multi-select__description">{{ option.description }}</span>
+            }
+          </span>
+        </span>
+      </button>
+    }
+  </div>
+
+  @if (showFooter()) {
+    <div class="iris-multi-select__footer">
+      <iris-button class="iris-multi-select__footer-button" variant="ghost" size="default" (click)="clearAll()"> Clear </iris-button>
+      <iris-button class="iris-multi-select__footer-button" variant="ghost" size="default" (click)="selectAll()"> Select all </iris-button>
+    </div>
+  }
+</div>

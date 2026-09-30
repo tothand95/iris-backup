@@ -1,0 +1,10 @@
+<section class="iris-app-nav-group">
+  @if (label()) {
+    <iris-app-nav-group-header [expanded]="expanded()" (expandedChange)="expanded.set($event)" [label]="label()" [collapsible]="collapsible()" />
+  }
+  @if (expanded()) {
+    <div class="iris-app-nav-group__items">
+      <ng-content />
+    </div>
+  }
+</section>

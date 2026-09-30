@@ -1,0 +1,96 @@
+:host {
+  display: inline-block;
+}
+
+:host(.iris-code-blocks-host--full-width) {
+  display: block;
+}
+
+.iris-code-blocks {
+  font-family: var(--oi-text-code-font-family);
+  font-size: var(--oi-text-code-font-size);
+  line-height: var(--oi-text-code-line-height);
+  font-weight: var(--oi-text-code-font-weight);
+  color: var(--oi-content-color-primary);
+
+  &--inline {
+    display: inline;
+    padding: 0 var(--oi-spacing-xs);
+    border-radius: var(--oi-border-radius-s);
+    background-color: var(--oi-background-color-tertiary);
+  }
+
+  &--alt {
+    background-color: var(--oi-background-color-primary);
+  }
+
+  &--single-line,
+  &--multi-line {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--oi-spacing-s);
+    margin: var(--oi-spacing-s);
+    padding: var(--oi-spacing-xs) var(--oi-spacing-xs) var(--oi-spacing-xs) var(--oi-spacing-m);
+    border-radius: var(--oi-border-radius-s);
+    background-color: var(--oi-background-color-tertiary);
+  }
+
+  &--single-line {
+    align-items: center;
+  }
+
+  &__code {
+    display: flex;
+    gap: var(--oi-spacing-s);
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  &__line-numbers {
+    margin: 0;
+    min-width: var(--oi-size-s);
+    padding-right: var(--oi-spacing-s);
+    border-right: 1px solid var(--oi-border-color-default);
+    color: var(--oi-content-color-tertiary);
+    text-align: right;
+    white-space: pre;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    user-select: none;
+  }
+
+  &__text {
+    margin: 0;
+    white-space: pre;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+  }
+
+  &__copy-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--oi-size-default);
+    height: var(--oi-size-default);
+    padding: var(--oi-spacing-s);
+    border: none;
+    border-radius: var(--oi-border-radius-default);
+    background: transparent;
+    color: var(--oi-content-color-primary);
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--oi-background-color-secondary);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--oi-base-color-brand);
+      outline-offset: -2px;
+      background-color: var(--oi-background-color-secondary);
+    }
+  }
+}

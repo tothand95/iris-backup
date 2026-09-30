@@ -1,0 +1,72 @@
+:host {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.iris-app-global-header {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  padding: 6px var(--oi-spacing-m) 6px var(--oi-spacing-s);
+  gap: var(--oi-spacing-m);
+}
+
+.iris-app-global-header__bell {
+  position: relative;
+  display: inline-flex;
+
+  &::after {
+    position: absolute;
+    top: 7px;
+    right: 8px;
+    width: 6px;
+    height: 6px;
+    border: 1.5px solid var(--oi-background-color-secondary);
+    border-radius: 50%;
+    background-color: var(--oi-base-color-error);
+    content: '';
+    pointer-events: none;
+  }
+}
+
+.iris-app-global-header__title {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.iris-app-global-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--oi-spacing-m);
+}
+
+.iris-app-global-header__sidebar-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--oi-border-radius-s);
+  background-color: transparent;
+  color: var(--oi-content-color-secondary);
+  cursor: pointer;
+  transition: background-color var(--oi-motion-duration-short);
+
+  &:hover {
+    background-color: var(--oi-button-background-secondary-hover);
+  }
+
+  &:active {
+    background-color: var(--oi-button-background-secondary-active);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--oi-focus-ring);
+  }
+}

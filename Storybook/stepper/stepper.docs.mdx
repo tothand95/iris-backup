@@ -1,0 +1,88 @@
+{/* Copyright © 2026 One Identity LLC. ALL RIGHTS RESERVED. */}
+import { Meta, Canvas, ArgTypes, Controls } from '@storybook/addon-docs/blocks';
+import * as StepperStories from './stepper.stories';
+
+<Meta of={StepperStories} />
+
+# Stepper
+
+Displays a sequence of steps in a process, showing which steps are completed, which is current, and which are upcoming. Supports horizontal and vertical orientations. Each step shows a numbered indicator that transitions to a checkmark on completion or a warning icon on error.
+
+The stepper is template-driven: declare an `<iris-step>` for each step inside `<iris-stepper>`. Each step has a `label` and projects its own content, which renders when the step is selected.
+
+Attach an optional `irisStepControl` to derive the step's status from a reactive form's validity. It accepts any Angular `AbstractControl` — most often a `FormGroup` bundling the fields shown in that step, but a single `FormControl` (or `FormArray`) works equally well. The stepper reads the control's `invalid` flag (a `FormGroup` is invalid when any of its descendant controls are invalid) and subscribes to `statusChanges`, so the step's state updates live as validity changes.
+
+```html
+<iris-stepper [(selectedIndex)]="selectedIndex">
+  <iris-step label="Account" [irisStepControl]="accountForm">…step content…</iris-step>
+  <iris-step label="Profile" [irisStepControl]="profileForm">…step content…</iris-step>
+  <iris-step label="Review">…step content…</iris-step>
+</iris-stepper>
+```
+
+## When to use
+
+| Orientation | Use when |
+| --- | --- |
+| **Horizontal** | The process has few steps that fit in a single row |
+| **Vertical** | Steps need additional content or the layout is narrow |
+
+## Step status
+
+Status is resolved internally from each step's position relative to `selectedIndex`, whether it has been visited, and its optional `irisStepControl`:
+
+| Position | No control | Invalid control | Valid control |
+| --- | --- | --- | --- |
+| **Current** (`index === selectedIndex`) | `current` | `error-current` | `current` |
+| **Visited** (selected at least once) | `default` | `error` | `completed` |
+| **Not visited** (never selected) | `waiting` | `waiting` | `waiting` |
+
+Steps that have never been selected stay in the `waiting` state and never evaluate control validity — even earlier steps that were skipped when jumping ahead.
+
+## Interactive demo
+
+<Canvas of={StepperStories.Overview} />
+<Controls of={StepperStories.Overview} />
+
+## Vertical
+
+<Canvas of={StepperStories.Vertical} />
+
+## Linear
+
+When `linear` is `true`, forward navigation is restricted: from the current step the user can reach any step they have **already visited**, the **step just after the furthest step reached**, and (always) any earlier step. Steps beyond that frontier are disabled — shown with a not-allowed cursor and removed from the tab order.
+
+The stepper remembers visited steps internally, so a step you move forward to and then leave stays reachable and keeps its resolved style (rather than reverting to the waiting state).
+
+Advancing past the furthest step is gated on that step's **completion**. A step is complete when its `completed` input is `true`, or — when `completed` is unset — when its `irisStepControl` is valid (or always, if no control is attached). Set `[completed]` explicitly to control progression when a step has no form control.
+
+<Canvas of={StepperStories.Linear} />
+
+## With validation
+
+Attach reactive form controls to drive the completed/error states.
+
+<Canvas of={StepperStories.WithValidation} />
+
+## Accessibility
+
+- The stepper uses a `<nav>` element with `aria-label="Progress"` for landmark navigation.
+- The current step is marked with `aria-current="step"` so screen readers announce it.
+- Each step is a focusable button for keyboard interaction.
+- In `linear` mode, unreachable steps are native `disabled` buttons, so they are skipped by keyboard navigation and ignored by pointer and keyboard activation.
+
+## Stepper API
+
+<ArgTypes of={StepperStories} sort="alpha" />
+
+## Step API
+
+Each `<iris-step>` accepts:
+
+| Input | Type | Default | Description |
+| --- | --- | --- | --- |
+| `label` | `string` | `''` | Header label shown for the step. |
+| `irisStepControl` | `AbstractControl \| null` | `null` | Optional reactive form control whose validity drives the step status. Accepts any `AbstractControl` — a `FormGroup`, `FormControl`, or `FormArray`. |
+| `completed` | `boolean \| null` | `null` | Whether the step is complete, used by a `linear` stepper to gate forward progress. Left unset (`null`), completion is derived from `irisStepControl` validity, or `true` when no control is attached. An explicit boolean overrides both — letting you control progression without a form control. |
+
+The step's content is projected as children and rendered when the step is selected.

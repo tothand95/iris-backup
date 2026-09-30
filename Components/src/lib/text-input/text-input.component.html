@@ -1,0 +1,25 @@
+<div class="iris-text-input" [class.iris-text-input--lg]="size() === 'lg'">
+  <div
+    class="iris-text-input__input-wrapper"
+    [class.iris-text-input__input-wrapper--error]="effectiveHasError()"
+    [class.iris-text-input__input-wrapper--disabled]="effectiveDisabled()"
+    [class.iris-text-input__input-wrapper--readonly]="readonly()">
+    @if (leadingIcon(); as icon) {
+      <iris-icon class="iris-text-input__icon iris-text-input__icon--lead" [name]="icon" [size]="16" [decorative]="true" />
+    }
+    <input
+      class="iris-text-input__input"
+      [placeholder]="placeholder()"
+      [value]="valueState()"
+      [disabled]="effectiveDisabled()"
+      [readOnly]="readonly()"
+      [attr.aria-labelledby]="formField?.labelId ?? null"
+      [attr.aria-invalid]="effectiveHasError() || null"
+      [attr.aria-describedby]="formField?.activeDescriptionId() || null"
+      (input)="onInput($event)"
+      (blur)="onBlur()" />
+    @if (trailingIcon(); as icon) {
+      <iris-icon class="iris-text-input__icon iris-text-input__icon--trail" [name]="icon" [size]="16" [decorative]="true" />
+    }
+  </div>
+</div>

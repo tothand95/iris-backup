@@ -1,0 +1,37 @@
+@if (!isCollapsed()) {
+  <nav class="iris-app-global-sidebar" [attr.aria-label]="navLabel()">
+    <div class="iris-app-global-sidebar__content">
+      @for (group of groups(); track group.label ?? $index) {
+        <iris-app-nav-group [label]="group.label ?? ''" [collapsible]="group.collapsible ?? false">
+          @for (entry of group.entries; track entry.id) {
+            @if (isNavExpandable(entry)) {
+              <iris-app-nav-expandable [label]="entry.label" [icon]="entry.icon ?? ''" [expanded]="entry.expanded ?? false">
+                @for (child of entry.children; track child.id) {
+                  <iris-app-nav-item
+                    [label]="child.label"
+                    [icon]="child.icon ?? ''"
+                    [href]="child.href ?? ''"
+                    [disabled]="child.disabled ?? false"
+                    [active]="activeId() === child.id"
+                    (select)="itemSelected.emit(child.id)" />
+                }
+              </iris-app-nav-expandable>
+            } @else {
+              <iris-app-nav-item
+                [label]="entry.label"
+                [icon]="entry.icon ?? ''"
+                [href]="entry.href ?? ''"
+                [disabled]="entry.disabled ?? false"
+                [active]="activeId() === entry.id"
+                (select)="itemSelected.emit(entry.id)" />
+            }
+          }
+        </iris-app-nav-group>
+      }
+      <ng-content />
+    </div>
+    <footer class="iris-app-global-sidebar__footer">
+      <ng-content select="[appGlobalSidebarFooter]" />
+    </footer>
+  </nav>
+}

@@ -1,0 +1,212 @@
+{/* Copyright © 2026 One Identity LLC. ALL RIGHTS RESERVED. */}
+import { Meta, Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import * as TreeStories from './tree.stories';
+
+<Meta of={TreeStories} />
+
+# Tree
+
+A hierarchical list for nested parent-child data. Each node shows one leading icon, optional nested children, and a single active row driven by `activeNodeId`.
+
+Parent rows can be expanded from the caret button or the keyboard. Current implementation shows optional trailing affordance icons, but those trailing icons are decorative only.
+
+The component is fully controlled: it reads `nodes` and never writes to it. Every interaction is an event you apply to your own array, so each section below is a scenario — what you are building, and the data you have to keep.
+
+| Scenario | Section | What you own |
+|---|---|---|
+| The whole hierarchy is known up front | [Static hierarchy](#static-hierarchy) | nothing beyond the array |
+| A row drives a detail pane or route | [Active node](#active-node) | `activeNodeId` |
+| The user opens and closes branches | [Expansion behavior](#expansion-behavior) | `node.expanded` |
+| Levels are fetched from a server on demand | [Lazy loaded hierarchies](#lazy-loaded-hierarchies) | `node.children`, `loading`, `expandable` |
+| The user picks a set of nodes for a bulk action | [Checkable rows](#checkable-rows) | `node.checkState` |
+| Rows carry your own domain data | [Extending TreeNode](#extending-treenode) | the extended node type |
+
+## Static hierarchy
+
+The simplest case: the whole tree is known up front, so `nodes` is a plain array and every open branch carries `expanded: true` in the data. Nothing else is required to render.
+
+```ts
+nodes: TreeNode[] = [
+  { id: 'ad', label: 'Active Directory', icon: 'Network', expanded: true, children: [{ id: 'ad-oto', label: 'OTO.local' }] }
+];
+```
+
+Even here the component is fully controlled: it renders exactly what the array says, and the sections below are all variations on who writes that array and when.
+
+<Canvas of={TreeStories.Overview} />
+
+## Active node
+
+Set `activeNodeId` to a node `id` to highlight the current row. It is a `model`, so `[(activeNodeId)]` two-way binds: the tree writes the id on activation and emits `activeNodeIdChange`. Bind one way and handle the event if the new value has to be vetoed or routed through a store first.
+
+Activation carries the id, not the node — look it up with `findTreeNode` when you need the object.
+
+<Canvas of={TreeStories.ActiveNode} />
+
+## Expansion behavior
+
+- The caret button toggles a parent open and closed without making the row active.
+- Clicking a row only makes it active. Set `expandOnActivate` to also open the node; collapsing stays on the caret and Arrow Left, so a second click never hides what you just opened.
+- **Expansion is your state.** `node.expanded` is the single source of truth and the component never writes to it. A toggle emits `nodeExpandedChange` — an intent — and nothing moves until you apply it to `nodes`:
+
+```ts
+nodes = signal<readonly TreeNode[]>(INITIAL);
+
+onExpanded({ node, expanded }: TreeExpandedChange): void {
+  this.nodes.update((nodes) => patchTreeNode(nodes, node.id, { expanded }));
+}
+```
+
+  `patchTreeNode` is exported from the package. It rebuilds only the branch down to that id, leaves every other node's identity intact, and never mutates the input — so `nodes` can be frozen or `computed()`-derived.
+
+- Everything programmatic is the same write: open a deep-linked path by loading it with `expanded: true`, collapse a stale branch by patching it to `false`, expand all by mapping the tree. There is no imperative API and no `viewChild`.
+- Two caveats. A `computed()` that re-projects `nodes` from raw data drops expansion unless you carry the flags over. And two `<iris-tree>` instances bound to the same array share expansion — give each pane its own copy if that is wrong for you.
+
+<Canvas of={TreeStories.ExpandOnActivate} />
+
+## Lazy loaded hierarchies
+
+A remote hierarchy is fetched one level at a time, so a node is expandable before its children exist. Three model fields cover the whole flow:
+
+- `expandable: true` renders the caret for a node that has no `children` yet.
+- `loading: true` puts a spinner in the caret, marks the row `aria-busy` and blocks further toggles until the level lands.
+- `children` is the load marker — `undefined` means "never fetched", `[]` means "fetched and empty". No shadow `loaded` flag is needed.
+
+Expanding emits `nodeExpandedChange` before any children exist, which is the signal to fetch. Set `showEmptyGroup` so a container that resolves to `[]` shows a disabled row instead of silently looking like a leaf.
+
+<Canvas of={TreeStories.LazyLoaded} />
+
+## Node icons
+
+Without an explicit `icon`, an expandable node uses `Folder` / `FolderOpen` and a non-expandable node uses `Placeholder`. Expandability drives this, not `children.length`, so a loaded but empty container marked `expandable: true` still looks like a container.
+
+Pass `iconResolver` to take over entirely — it receives the node plus its resolved `expanded`, `expandable` and `active` state:
+
+```ts
+iconResolver = (node: TreeNode, state: TreeIconState): IconName =>
+  state.expanded || state.active ? 'FolderOpen' : 'Folder';
+```
+
+## Without trailing icons
+
+Set `showTrailingIcons` to `false` to hide decorative trailing affordances globally. A single node can also opt out by setting `showTrailingIcons: false` on that node.
+
+<Canvas of={TreeStories.WithoutTrailingIcons} />
+
+## Checkable rows
+
+Set `checkable` to render a checkbox between the caret and the leading icon. It rests dimmed and comes to full opacity on hover, on keyboard focus and on the active row. A checked or mixed node stays fully visible regardless.
+
+The state lives on the node, exactly like expansion — the tree emits `nodeCheckedChange` and renders nothing until you patch `nodes`:
+
+```ts
+onChecked({ node, checked }: TreeCheckedChange) {
+  this.nodes.update((current) => patchTreeNode(current, node.id, { checkState: checked ? 'checked' : 'unchecked' }));
+}
+```
+
+Set `checkState: 'mixed'` on a node to draw the mixed glyph; activating a mixed node clears it. Cascading a check down to descendants, or rolling a mixed state up to ancestors, is your policy — the component never walks the tree for you. `cascadeTreeCheck` implements the usual one, and the story below uses it: a container writes its state onto every descendant, and every ancestor is re-derived from its children.
+
+```ts
+onChecked({ node, checked }: TreeCheckedChange) {
+  this.nodes.update((current) => cascadeTreeCheck(current, node.id, checked));
+}
+
+submit() {
+  const ids = getCheckedTreeNodes(this.nodes()).map((node) => node.id);
+}
+```
+
+<Canvas of={TreeStories.Checkable} />
+
+## Extending TreeNode
+
+`TreeNode` is meant to be extended. The tree reads the properties it knows and ignores the rest, so put your own data on the node instead of keeping a parallel map keyed by id:
+
+```ts
+interface DirectoryNode extends TreeNode {
+  objectType: string;
+  distinguishedName: string;
+  children?: DirectoryNode[];
+}
+
+nodes = signal<DirectoryNode[]>(INITIAL);
+```
+
+Redeclaring `children` is what keeps descendants narrow — without it they stay plain `TreeNode`, and `node.children[0].objectType` will not compile.
+
+Every helper is generic over the node type and builds its result with structural-sharing spreads, so extra properties survive and the type is preserved end to end:
+
+```ts
+// still DirectoryNode[]
+this.nodes.update((nodes) => patchTreeNode(nodes, node.id, { expanded }));
+
+// narrowed, so objectType is available
+const node = findTreeNode(this.nodes(), this.activeNodeId());
+```
+
+The payload of `nodeExpandedChange` and `nodeCheckedChange` is typed as the base `TreeNode`, since the component has no knowledge of your type. Use the emitted `node.id` with a helper rather than casting the payload.
+
+## Accessibility
+
+- Root list uses `role="tree"`. Nested child lists use `role="group"`.
+- Each node uses `role="treeitem"`.
+- Parent nodes expose `aria-expanded`; active node exposes `aria-selected="true"`.
+- A node with `expandable: true` exposes `aria-expanded` before its children are loaded, so assistive technology can tell it is a collapsed branch without a placeholder child.
+- A node with `loading: true` exposes `aria-busy="true"` and its caret is disabled.
+- Caret button label switches between `collapseAriaLabel` (default `'Collapse'`), `expandAriaLabel` (default `'Expand'`) and `loadingAriaLabel` (default `'Loading'`). Localize these for non-English UIs.
+- The `showEmptyGroup` row text comes from `emptyGroupLabel` (default `'Empty'`).
+- Supply `ariaLabel` to label the tree landmark when multiple trees exist on the page.
+- With `checkable`, the tree exposes `aria-multiselectable="true"` and every row exposes `aria-checked` (`mixed` when `checkState` is `'mixed'`). The checkbox button label switches between `checkAriaLabel` (default `'Check'`) and `uncheckAriaLabel` (default `'Uncheck'`).
+- Enter makes the focused row active. Space toggles its checkbox when `checkable`, otherwise it makes the row active. Arrow Right expands collapsed parent. Arrow Left collapses expanded parent.
+- Arrow Down and Arrow Up move focus to next or previous visible row in DOM order.
+- Every visible row has `tabindex="0"` in current implementation; component does not use roving tabindex or `aria-level`.
+
+## API
+
+<ArgTypes of={TreeStories} sort="alpha" />
+
+### TreeNode
+
+Each entry in `nodes` array, and recursively in `children`, must conform to `TreeNode`.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `id` | `string` | ✓ | Unique identifier used for active-node tracking. |
+| `label` | `string` | ✓ | Visible node label. |
+| `icon` | `string` | | Optional icon override. Without it, expandable nodes use folder icons and non-expandable nodes use `Placeholder`. |
+| `expanded` | `boolean` | | Whether the node is open. Yours to set — the component reads it and never writes it back. |
+| `expandable` | `boolean` | | Renders the caret even when `children` has not arrived. Defaults to `children.length > 0`. |
+| `children` | `TreeNode[]` | | Nested child nodes. `undefined` means the level was never fetched, `[]` means it was fetched and is empty. |
+| `loading` | `boolean` | | Shows a spinner in the caret, marks the row `aria-busy` and blocks toggles. |
+| `checkState` | `'checked' \| 'unchecked' \| 'mixed'` | | State of the row's checkbox. Requires `checkable`. Defaults to `'unchecked'`. Yours to set — the component reads it and never writes it back. |
+| `showTrailingIcons` | `boolean` | | Per-node override for decorative trailing affordances. `false` hides them even when component input is `true`. |
+
+### TreeExpandedChange
+
+| Property | Type | Description |
+|---|---|---|
+| `node` | `TreeNode` | The node the user opened or closed. |
+| `expanded` | `boolean` | `true` when opened, `false` when closed. |
+
+### TreeCheckedChange
+
+| Property | Type | Description |
+|---|---|---|
+| `node` | `TreeNode` | The node whose checkbox the user activated. |
+| `checked` | `boolean` | The requested state. A mixed node always resolves to `false`. |
+
+### Helpers
+
+Every piece of tree state is yours, so the package ships the pure functions that state needs. All of them return a new array, leave untouched branches identical by reference, and are generic over the node type — see [Extending TreeNode](#extending-treenode).
+
+| Function | Signature | Use it for |
+|---|---|---|
+| `patchTreeNode` | `(nodes, id, patch) => TreeNode[]` | Applying one emitted intent — expansion, loading, lazily loaded `children`. |
+| `cascadeTreeCheck` | `(nodes, id, checked) => TreeNode[]` | Containers that own their children: cascades down, re-derives every ancestor to checked, unchecked or mixed. |
+| `getCheckedTreeNodes` | `(nodes) => TreeNode[]` | Harvesting the result. Depth first, mixed excluded, containers included. |
+| `findTreeNode` | `(nodes, id) => TreeNode \| undefined` | Turning a stored id — `activeNodeId`, a route param — back into node data. |
+| `getTreeNodePath` | `(nodes, id) => TreeNode[]` | Breadcrumbs. Root first, target last, empty when the id is unknown. |
+| `expandTreePath` | `(nodes, id) => TreeNode[]` | Revealing a deep-linked node. Expands ancestors only; a lazy branch still has to be fetched level by level first. |
+
+`cascadeTreeCheck` is one policy, not the policy. A tree whose rows check independently patches the single node instead.

@@ -1,0 +1,15 @@
+@if (collapsible()) {
+  <button
+    class="iris-app-nav-group-header"
+    type="button"
+    [class.iris-app-nav-group-header--collapsible]="true"
+    [attr.aria-expanded]="expanded()"
+    (click)="toggleExpanded()">
+    <span class="iris-app-nav-group-header__label">{{ label() }}</span>
+    <iris-icon [name]="expanded() ? 'CaretUp' : 'CaretDown'" [size]="12" [decorative]="true" />
+  </button>
+} @else {
+  <div class="iris-app-nav-group-header">
+    <span class="iris-app-nav-group-header__label">{{ label() }}</span>
+  </div>
+}

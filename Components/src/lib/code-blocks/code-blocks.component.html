@@ -1,0 +1,24 @@
+@if (type() === 'inline') {
+  <code class="iris-code-blocks iris-code-blocks--inline" [class.iris-code-blocks--alt]="variant() === 'alt'">{{ code() }}</code>
+} @else if (type() === 'single-line') {
+  <div class="iris-code-blocks iris-code-blocks--single-line">
+    <div class="iris-code-blocks__code">
+      <code class="iris-code-blocks__text">{{ code() }}</code>
+    </div>
+    <button class="iris-code-blocks__copy-button" type="button" [attr.aria-label]="copyLabel()" (click)="copyToClipboard()">
+      <iris-icon [name]="'CopySimple'" [size]="16" [decorative]="true" />
+    </button>
+  </div>
+} @else {
+  <div class="iris-code-blocks iris-code-blocks--multi-line">
+    <div class="iris-code-blocks__code">
+      @if (showLineNumbers()) {
+        <pre class="iris-code-blocks__line-numbers" aria-hidden="true"><code>{{ lineNumbers() }}</code></pre>
+      }
+      <pre class="iris-code-blocks__text"><code>{{ code() }}</code></pre>
+    </div>
+    <button class="iris-code-blocks__copy-button" type="button" [attr.aria-label]="copyLabel()" (click)="copyToClipboard()">
+      <iris-icon [name]="'CopySimple'" [size]="16" [decorative]="true" />
+    </button>
+  </div>
+}

@@ -1,0 +1,63 @@
+{/* Copyright © 2026 One Identity LLC. ALL RIGHTS RESERVED. */}
+import { ArgTypes, Canvas, Controls, Meta } from '@storybook/addon-docs/blocks';
+import * as MultiSelectStories from './multi-select.stories';
+
+<Meta of={MultiSelectStories} />
+
+# MultiSelect
+
+A searchable dropdown that allows selecting multiple options from a list. Each option shows a checkbox indicator and an optional description. A search input for filtering and a footer with `Clear` and `Select all` actions are shown by default and can each be toggled off via `showSearch` and `showFooter`.
+
+## Item content
+
+Each option shows its `label` as the main line. When an option also provides a `description`, it is displayed automatically as a second meta line; when omitted, only the label is shown.
+
+## Interactive demo
+
+<Canvas of={MultiSelectStories.Overview} />
+<Controls of={MultiSelectStories.Overview} />
+
+## Labels only
+
+<Canvas of={MultiSelectStories.LabelsOnly} />
+
+## With icons
+
+<Canvas of={MultiSelectStories.WithIcons} />
+
+## With preselected values
+
+<Canvas of={MultiSelectStories.WithPreselected} />
+
+## Without search and footer
+
+Set `showSearch` and `showFooter` to `false` to render just the option list — useful for compact menus where filtering and bulk actions aren't needed.
+
+<Canvas of={MultiSelectStories.ListOnly} />
+
+## Long list
+
+When there are many options, the item list scrolls within a fixed maximum height while the search, header, and footer stay pinned.
+
+<Canvas of={MultiSelectStories.LongList} />
+
+## Trigger (directive)
+
+Attach the `irisMultiSelect` directive to any element to use it as a trigger. Clicking the trigger opens the panel in a floating overlay positioned relative to it; selecting options keeps the panel open, and it closes on the trigger, an outside click, or Escape.
+
+<Canvas of={MultiSelectStories.Trigger} />
+
+## Positions
+
+The preferred position is configurable via `irisMultiSelectPosition` (default `bottom-start`). When it does not fit the viewport, the overlay falls back in order: bottom-start → bottom-end → top-start → top-end.
+
+<Canvas of={MultiSelectStories.Positions} />
+
+## Accessibility
+
+- The panel is a `role="listbox"` with `aria-multiselectable="true"`; each option is a focusable button with `role="option"` for keyboard navigation.
+- Checkbox indicators visually convey selection state; screen readers receive it through `aria-selected` on each option. Disabled options are exposed via `aria-disabled` and are not activatable.
+
+## API
+
+<ArgTypes of={MultiSelectStories} sort="alpha" />

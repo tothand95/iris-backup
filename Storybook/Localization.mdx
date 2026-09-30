@@ -1,0 +1,159 @@
+{/* Copyright © 2026 One Identity LLC. ALL RIGHTS RESERVED. */}
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Iris UI / Localization" />
+
+# Localization
+
+Iris UI renders accessible names for controls that have no visible text: the dismiss button of a toast, the expand chevron of a tree node, the page indicator of a pagination bar. Those strings live in the library, so a product that ships in more than one language has to be able to replace them.
+
+Every one of them is collected in a single label map behind the `@oneidentity/iris-ui/i18n` entry point. You override the map once for the whole application instead of passing an `aria-label` to every component instance.
+
+```ts
+import { provideIrisUiLocalization } from '@oneidentity/iris-ui/i18n';
+```
+
+The entry point ships with the package. There is nothing extra to install, and no configuration is required to get started: every label falls back to a built-in English default, so components are accessible out of the box.
+
+## Register the labels
+
+Add `provideIrisUiLocalization()` to the application providers. It is an `EnvironmentProviders`, so it belongs in `app.config.ts` next to the other `provide*` functions.
+
+```ts
+// app.config.ts
+import { ApplicationConfig } from '@angular/core';
+import { provideIrisUiLocalization } from '@oneidentity/iris-ui/i18n';
+
+export const appConfig: ApplicationConfig = {
+  providers: [provideIrisUiLocalization({ labels: { 'toast.dismiss': 'Schließen' } })]
+};
+```
+
+The config is partial. Any key you leave out keeps its English default, which is what allows a future Iris UI version to add a label without breaking an application that is already localized.
+
+## Static strings or signals
+
+A label accepts either a plain string or a `Signal<string>`.
+
+- A **plain string** suits an application with one fixed language. It is wrapped in a signal internally.
+- A **signal** lets the label follow the active language. Labels are read inside each component's own template, so switching language re-renders every affected component — including overlays that are already on screen.
+
+## Resolving labels from a translation service
+
+Pass a factory instead of an object when the labels come from another service. The factory runs inside an injection context, so it can `inject()`.
+
+```ts
+// app.config.ts
+providers: [provideIrisUiLocalization(mapIrisLabels)];
+```
+
+```ts
+import { inject, Signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslocoService } from '@jsverse/transloco';
+import { IrisLabelConfig, IrisUiLocalizationConfig } from '@oneidentity/iris-ui/i18n';
+
+// Seeded with the synchronous translation so the first render already shows the correct text rather than an empty string.
+function label(translateService: TranslocoService, path: string): Signal<string> {
+  return toSignal(translateService.selectTranslate<string>(path), {
+    initialValue: translateService.translate<string>(path)
+  });
+}
+
+export function mapIrisLabels(): IrisUiLocalizationConfig {
+  const translateService = inject(TranslocoService);
+
+  const labels: Required<IrisLabelConfig> = {
+    'toast.dismiss': label(translateService, 'app.iris.toastDismiss'),
+    'tree.expand': label(translateService, 'app.iris.treeExpand')
+    // …every remaining key
+  } satisfies Required<IrisLabelConfig>;
+
+  return { labels };
+}
+```
+
+Typing the map as `Required<IrisLabelConfig>` makes the override exhaustive: a label added by a later Iris UI version becomes a compile error here instead of an untranslated English string discovered in production. Use the plain `IrisLabelConfig` type when you deliberately want to translate only part of the set. `IrisLabelKey` is exported for the same purpose on your own structures, for example `satisfies Record<IrisLabelKey, string>` on a map of translation paths.
+
+## Composed labels
+
+Three labels are not strings but functions, because word order and separators differ per language and cannot be concatenated in a template. They are supplied as a signal of a function.
+
+| Key | Signature |
+| --- | --- |
+| `banner.announcement` | `(typeLabel: string, title: string) => string` |
+| `toast.announcement` | `(typeLabel: string, title: string) => string` |
+| `pagination.position` | `(current: number, total: number \| undefined) => string` |
+
+`total` is `undefined` when the number of pages is unknown, so the label has to cover both phrasings.
+
+```ts
+const activeLang = toSignal(translateService.langChanges$, { initialValue: translateService.getActiveLang() });
+
+const paginationPosition = computed(() => {
+  // read so the label is rebuilt whenever the active language changes
+  activeLang();
+
+  return (current: number, total: number | undefined): string =>
+    translateService.translate<string>(total === undefined ? 'app.iris.pageOfUnknown' : 'app.iris.pageOf', { current, total });
+});
+```
+
+A composed label is a function, so reading the active language inside the `computed()` is what makes it re-evaluate on a language switch — the function identity itself never changes.
+
+## Label reference
+
+The built-in English defaults, by component.
+
+| Key | Default |
+| --- | --- |
+| `appGlobalHeader.toggleSidebar` | Toggle sidebar |
+| `appGlobalSidebar.label` | Primary |
+| `appLayout.resizeSidebar` | Resize sidebar |
+| `appProductSwitcher.label` | Product switcher |
+| `appProductSwitcher.home` | Home |
+| `banner.dismiss` | Dismiss |
+| `banner.info` | Info |
+| `banner.warning` | Warning |
+| `banner.error` | Error |
+| `banner.success` | Success |
+| `banner.announcement` | `${typeLabel}: ${title}` |
+| `breadcrumb.label` | Breadcrumb |
+| `breadcrumb.showMore` | Show more breadcrumb items |
+| `buttonSplit.moreOptions` | More options |
+| `codeBlock.copy` | Copy code |
+| `modal.close` | Close |
+| `pagination.label` | Pagination |
+| `pagination.previous` | Previous |
+| `pagination.next` | Next |
+| `pagination.previousPage` | Previous page |
+| `pagination.nextPage` | Next page |
+| `pagination.position` | Page `${current}` of `${total}` |
+| `sidesheet.close` | Close |
+| `sidesheet.maximize` | Maximize |
+| `sidesheet.restore` | Restore |
+| `slider.minimumValue` | Minimum value |
+| `slider.maximumValue` | Maximum value |
+| `spinner.loading` | Loading |
+| `stepper.progress` | Progress |
+| `tag.remove` | Remove |
+| `toast.dismiss` | Dismiss |
+| `toast.info` | Info |
+| `toast.warning` | Warning |
+| `toast.error` | Error |
+| `toast.success` | Success |
+| `toast.announcement` | `${typeLabel}: ${title}` |
+| `tree.expand` | Expand |
+| `tree.collapse` | Collapse |
+| `tree.loading` | Loading |
+| `tree.empty` | Empty |
+| `tree.check` | Check |
+| `tree.uncheck` | Uncheck |
+
+## Reading a label in your own code
+
+The resolved map is available through the `IRIS_LABELS` injection token, and `irisLabel(key)` returns a single label as a signal with an optional per-call override. Both require an injection context. They exist so components inside the library can resolve their own labels; reach for them only when you build something that has to match an Iris control exactly, and use the configured strings for everything else.
+
+## Scope
+
+This covers the accessible names Iris UI renders itself. Visible content you pass in — button labels, column headers, toast titles — is translated by your own i18n library before it reaches the component. Date, number, and currency formatting is likewise the application's responsibility.

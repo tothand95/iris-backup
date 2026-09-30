@@ -1,0 +1,23 @@
+<div class="iris-app-global-header">
+  <button
+    class="iris-app-global-header__sidebar-toggle"
+    type="button"
+    [attr.aria-label]="sidebarToggleLabel()"
+    [attr.aria-expanded]="sidebarExpanded()"
+    (click)="toggleSidebar()">
+    <iris-icon [name]="sidebarExpanded() ? 'SidebarExpanded' : 'SidebarCollapsed'" [size]="24" [decorative]="true" />
+  </button>
+  <div class="iris-app-global-header__title">
+    <ng-content select="[appGlobalHeaderContent]" />
+  </div>
+  <div class="iris-app-global-header__actions">
+    <ng-content select="[appGlobalHeaderActions]">
+      <iris-button variant="ghost" [labelHidden]="true" leadingIconName="MagnifyingGlass" type="button">Search</iris-button>
+      <span class="iris-app-global-header__bell">
+        <iris-button variant="ghost" [labelHidden]="true" leadingIconName="Bell" type="button">Notifications</iris-button>
+      </span>
+      <iris-app-ai-cta />
+      <iris-avatar initials="ID" alt="Current user" />
+    </ng-content>
+  </div>
+</div>

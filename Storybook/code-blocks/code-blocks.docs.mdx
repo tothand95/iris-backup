@@ -1,0 +1,54 @@
+{/* Copyright © 2026 One Identity LLC. ALL RIGHTS RESERVED. */}
+import { ArgTypes, Canvas, Controls, Meta } from '@storybook/addon-docs/blocks';
+import * as CodeBlocksStories from './code-blocks.stories';
+
+<Meta of={CodeBlocksStories} />
+
+# Code blocks
+
+Displays code snippets in three modes: inline within text, single-line blocks with a copy button, and multi-line blocks with optional line numbers and a copy button. Use inline for referencing commands or variables in prose, and block modes for displaying copyable code examples.
+
+## When to use
+
+| Type | Use when |
+| --- | --- |
+| **Inline** | Referencing a command, variable, or short snippet within a paragraph |
+| **Single-line** | Showing a single copyable command or URL |
+| **Multi-line** | Displaying multi-line code with optional line numbers |
+
+## Interactive demo
+
+<Canvas of={CodeBlocksStories.Overview} />
+<Controls of={CodeBlocksStories.Overview} />
+
+## Inline variants
+
+<Canvas of={CodeBlocksStories.Inline} />
+<Canvas of={CodeBlocksStories.InlineAlt} />
+
+## Single line
+
+<Canvas of={CodeBlocksStories.SingleLine} />
+
+## Multi-line
+
+<Canvas of={CodeBlocksStories.MultiLine} />
+<Canvas of={CodeBlocksStories.MultiLineWithoutLineNumbers} />
+<Canvas of={CodeBlocksStories.ManyLines} />
+
+## Full width
+
+By default block modes shrink to fit their content. Set `fullWidth` to stretch a
+single-line or multi-line block to fill its container. This has no effect on
+inline snippets.
+
+<Canvas of={CodeBlocksStories.FullWidth} />
+
+## Accessibility
+
+- The copy button has an `aria-label` of "Copy code" for screen reader users.
+- Line numbers are marked `aria-hidden` to prevent them from being read as part of the code content.
+
+## API
+
+<ArgTypes of={CodeBlocksStories} sort="alpha" />

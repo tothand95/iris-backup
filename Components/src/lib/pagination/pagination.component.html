@@ -1,0 +1,46 @@
+<nav
+  class="iris-pagination"
+  [class.iris-pagination--simplified]="type() === 'simplified'"
+  [attr.aria-label]="navLabel()"
+  [attr.aria-busy]="loading() ? 'true' : null">
+  @if (type() === 'default') {
+    <button class="iris-pagination__item iris-pagination__item--nav" [disabled]="loading() || !hasPreviousPage()" (click)="goToPreviousPage()">
+      <iris-icon name="CaretLeft" [size]="16" [label]="previousPageLabel()"></iris-icon>
+    </button>
+
+    @for (page of visiblePages(); track page) {
+      @if (page === 'separator') {
+        <span class="iris-pagination__item iris-pagination__item--separator" aria-hidden="true">…</span>
+      } @else {
+        <button
+          class="iris-pagination__item iris-pagination__item--page"
+          [class.iris-pagination__item--active]="page === currentPage()"
+          [attr.aria-current]="page === currentPage() ? 'page' : null"
+          [disabled]="loading()"
+          (click)="goToPage(page)">
+          {{ page }}
+        </button>
+      }
+    }
+
+    <button class="iris-pagination__item iris-pagination__item--nav" [disabled]="loading() || !hasNextPage()" (click)="goToNextPage()">
+      <iris-icon name="CaretRight" [size]="16" [label]="nextPageLabel()"></iris-icon>
+    </button>
+  }
+
+  @if (type() === 'simplified') {
+    <button class="iris-pagination__item iris-pagination__item--label" [disabled]="loading() || !hasPreviousPage()" (click)="goToPreviousPage()">
+      <iris-icon name="CaretLeft" [size]="16" [decorative]="true"></iris-icon>
+      <span>{{ previousLabel() }}</span>
+    </button>
+
+    @if (showPosition()) {
+      <span class="iris-pagination__position" aria-live="polite">{{ positionText() }}</span>
+    }
+
+    <button class="iris-pagination__item iris-pagination__item--label" [disabled]="loading() || !hasNextPage()" (click)="goToNextPage()">
+      <span>{{ nextLabel() }}</span>
+      <iris-icon name="CaretRight" [size]="16" [decorative]="true"></iris-icon>
+    </button>
+  }
+</nav>

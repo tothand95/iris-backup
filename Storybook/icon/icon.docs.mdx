@@ -1,0 +1,58 @@
+{/* Copyright © 2026 One Identity LLC. ALL RIGHTS RESERVED. */}
+import { Meta, Canvas, ArgTypes, Controls } from '@storybook/addon-docs/blocks';
+import * as IconStories from './icon.stories';
+
+<Meta of={IconStories} />
+
+# Icon
+
+`iris-icon` renders a named icon from `@oneidentity/iris-ui-icons` by looking up the requested `name` and injecting the matching SVG markup inline. The `name` input is required. `size` defaults to `24`, and `label` defaults to an empty string.
+
+## Iconography
+
+<Canvas of={IconStories.Iconography} story={{ height: '768px', inline: false }} />
+
+## Sizes
+
+Supported sizes are `16`, `20`, and `24`. Stroke weight is not scaled — each icon keeps the `stroke-width` baked into its asset (`1.5` for almost all of them), so line weight stays consistent with the design source at every size.
+
+<Canvas of={IconStories.Sizes} />
+
+## Typed icon names
+
+`name` is typed as `IconName`, a union of every icon in `@oneidentity/iris-ui-icons`. Invalid names fail at compile time, with a "did you mean" suggestion for near misses. The same type is used by every component and model that accepts an icon (`iris-button`, `iris-badge`, `MenuItem`, `TreeNode`, `AppNavItem`, and others).
+
+```ts
+import type { IconName } from '@oneidentity/iris-ui';
+
+const icon: IconName = 'Folder'; // ✅
+const broken: IconName = 'folder'; // ❌ Did you mean "Folder"?
+```
+
+## Bundle size and loading
+
+The icon set is about 600 kB, so it is not part of the main bundle. `iris-icon` pulls it in through a single dynamic import, which bundlers emit as **one separate chunk** — visible as its own entry in build output and bundle analyzers.
+
+The chunk is requested once, on the first `iris-icon` that renders, and shared by every instance afterwards. Because it resolves asynchronously, an icon paints one microtask after its host component. In tests, await the import before asserting on rendered SVG markup:
+
+```ts
+await import('@oneidentity/iris-ui-icons/icons');
+await fixture.whenStable();
+```
+
+## Missing icons
+
+If `name` does not match an icon in the icon registry, the wrapper still renders but no SVG markup is inserted.
+
+## Accessibility
+
+- The component always renders `role="img"`.
+- `aria-label` always receives an accessible name: `label` when provided, otherwise `name`.
+- Because an accessible name is always applied, the component is not decorative by default.
+- `iris-icon` does not add keyboard handlers or make itself focusable.
+
+<Canvas of={IconStories.WithAccessibleLabel} />
+
+## API
+
+<ArgTypes of={IconStories} sort="alpha" />

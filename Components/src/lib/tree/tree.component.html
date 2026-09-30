@@ -1,0 +1,98 @@
+<ul class="iris-tree" role="tree" [attr.aria-label]="ariaLabel() || null" [attr.aria-multiselectable]="checkable() ? true : null">
+  <ng-container *ngTemplateOutlet="nodeList; context: { $implicit: nodes(), level: 0, indentGuideArray: [] }"></ng-container>
+</ul>
+
+<ng-template #nodeList let-nodes let-level="level" let-indentGuideArray="indentGuideArray">
+  @for (node of nodes; track node.id; let first = $first, last = $last) {
+    <li
+      class="iris-tree__node"
+      role="treeitem"
+      [attr.aria-selected]="node.id === activeNodeId()"
+      [attr.aria-expanded]="isExpandable(node) ? isExpanded(node) : null"
+      [attr.aria-checked]="checkable() ? (isIndeterminate(node) ? 'mixed' : isChecked(node)) : null"
+      [attr.aria-busy]="node.loading ? true : null">
+      <div
+        class="iris-tree__element"
+        [class.iris-tree__element--active]="node.id === activeNodeId()"
+        [attr.tabindex]="0"
+        (click)="onNodeClick(node)"
+        (keydown)="onNodeKeydown($event, node)">
+        @for (guide of indentGuides(level, indentGuideArray, last); track $index) {
+          <span class="iris-tree__trail" [class.iris-tree__trail__last]="guide.isLast"></span>
+        }
+        <span class="iris-tree__leading" [class.iris-tree__leading__first]="first && isExpandable(node) && isExpanded(node)">
+          @if (isExpandable(node)) {
+            <button
+              class="iris-tree__caret"
+              type="button"
+              [class.iris-tree__caret--expanded]="isExpanded(node) && !node.loading"
+              [disabled]="node.loading ?? false"
+              [attr.aria-label]="node.loading ? loadingLabel() : isExpanded(node) ? collapseLabel() : expandLabel()"
+              (click)="onToggle($event, node)">
+              @if (node.loading) {
+                <iris-spinner size="sm" [ariaLabel]="loadingLabel()" />
+              } @else {
+                <iris-icon name="CaretRight" [size]="16" [decorative]="true" />
+              }
+            </button>
+          } @else {
+            <span class="iris-tree__caret-placeholder"></span>
+          }
+          @if (checkable()) {
+            <button
+              class="iris-tree__checkbox"
+              type="button"
+              tabindex="-1"
+              [class.iris-tree__checkbox--visible]="isChecked(node) || isIndeterminate(node)"
+              [attr.aria-label]="isChecked(node) ? uncheckLabel() : checkLabel()"
+              (click)="onCheckClick($event, node)">
+              <iris-checkbox [decorative]="true" [checked]="isChecked(node)" [indeterminate]="isIndeterminate(node)" />
+            </button>
+          }
+          <iris-icon
+            [name]="resolveNodeIcon(node)"
+            [size]="16"
+            [decorative]="true"
+            [class.iris-tree__icon--placeholder]="!node.icon && !isExpandable(node)" />
+        </span>
+        <span class="iris-tree__label">{{ node.label }}</span>
+        @if (showTrailingIcons() && node.showTrailingIcons !== false) {
+          <span class="iris-tree__trailing">
+            <iris-icon name="DotsThreeVertical" [size]="16" [decorative]="true" />
+            @if (isExpandable(node)) {
+              <iris-icon name="CaretRight" [size]="16" [decorative]="true" />
+            }
+          </span>
+        }
+      </div>
+      @if (isExpanded(node)) {
+        @if (node.children?.length) {
+          <ul class="iris-tree__children" role="group">
+            <ng-container
+              *ngTemplateOutlet="
+                nodeList;
+                context: {
+                  $implicit: node.children,
+                  level: level + 1,
+                  indentGuideArray: buildNestedIndentGuides(indentGuideArray, last, level)
+                }
+              ">
+            </ng-container>
+          </ul>
+        } @else if (isEmptyGroup(node)) {
+          <ul class="iris-tree__children" role="group">
+            <li class="iris-tree__node" role="treeitem" [attr.aria-disabled]="true" [attr.aria-selected]="false">
+              <div class="iris-tree__element iris-tree__element--empty">
+                @for (guide of indentGuides(level + 1, buildNestedIndentGuides(indentGuideArray, last, level), true); track $index) {
+                  <span class="iris-tree__trail" [class.iris-tree__trail__last]="guide.isLast"></span>
+                }
+                <span class="iris-tree__caret-placeholder"></span>
+                <span class="iris-tree__label">{{ emptyLabel() }}</span>
+              </div>
+            </li>
+          </ul>
+        }
+      }
+    </li>
+  }
+</ng-template>

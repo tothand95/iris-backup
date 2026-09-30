@@ -1,0 +1,22 @@
+{
+  "$schema": "../node_modules/ng-packagr/ng-package.schema.json",
+  "dest": "dist",
+  "assets": [
+    ".npmrc",
+    "CHANGELOG.md",
+    {
+      "glob": "**/*",
+      "input": "api",
+      "output": "api"
+    },
+    {
+      "glob": "iris-ui.css",
+      "input": "src/styles",
+      "output": "/"
+    }
+  ],
+  "allowedNonPeerDependencies": ["@fontsource/inter", "@fontsource/ibm-plex-mono", "@oneidentity/iris-ui-icons"],
+  "lib": {
+    "entryFile": "src/public-api.ts"
+  }
+}

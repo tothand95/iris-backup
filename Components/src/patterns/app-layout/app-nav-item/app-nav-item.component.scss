@@ -1,0 +1,103 @@
+:host {
+  display: block;
+}
+
+.iris-app-nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 32px;
+  gap: var(--oi-spacing-s);
+  padding: var(--oi-spacing-xs);
+  border: 0;
+  border-radius: var(--oi-border-radius-default);
+  background-color: transparent;
+  color: var(--oi-content-color-secondary);
+  font-family: var(--oi-font-family-default);
+  font-size: var(--oi-font-size-s);
+  line-height: var(--oi-line-height-s);
+  font-weight: var(--oi-font-weight-400);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover:not(&--disabled) {
+    background-color: var(--oi-background-color-tertiary);
+    color: var(--oi-content-color-primary);
+  }
+
+  &:focus-visible {
+    outline: var(--oi-focus-ring);
+    outline-offset: var(--oi-spacing-xs);
+  }
+
+  &--active {
+    background-color: var(--oi-background-color-tertiary);
+    color: var(--oi-content-color-primary);
+    font-weight: var(--oi-font-weight-600);
+
+    &::before {
+      position: absolute;
+      top: var(--oi-spacing-xs);
+      bottom: var(--oi-spacing-xs);
+      left: calc(-1 * var(--oi-spacing-xs));
+      width: 2px;
+      border-radius: var(--oi-border-radius-max);
+      background-color: var(--oi-content-color-brand);
+      content: '';
+    }
+  }
+
+  &--disabled {
+    color: var(--oi-content-color-tertiary);
+    cursor: not-allowed;
+  }
+}
+
+.iris-app-nav-item__trail {
+  position: relative;
+  flex-shrink: 0;
+  align-self: stretch;
+  width: var(--oi-size-xs);
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: -4px;
+    bottom: -4px;
+    width: var(--oi-border-width-default);
+    background-color: var(--oi-border-color-default);
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 0;
+    width: calc(var(--oi-size-s) / 2);
+    height: calc(var(--oi-size-s) / 2);
+    border-left: var(--oi-border-width-default) solid var(--oi-border-color-default);
+    border-bottom: var(--oi-border-width-default) solid var(--oi-border-color-default);
+    border-radius: 0 0 0 100%;
+  }
+}
+
+:host(:last-child) > button > .iris-app-nav-item__trail::before,
+:host(:last-child) > a > .iris-app-nav-item__trail::before {
+  height: 4px;
+  bottom: unset;
+}
+
+.iris-app-nav-item__icon {
+  flex: 0 0 auto;
+}
+
+.iris-app-nav-item__label {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

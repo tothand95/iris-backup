@@ -1,0 +1,144 @@
+:host {
+  display: inline-block;
+}
+
+.iris-button {
+  // Bordered styles draw their border as an inset shadow rather than a real border so that every
+  // style occupies the same box. Figma renders all four styles at the same width, with the stroke
+  // inside the padding box.
+  --iris-button-border: 0 0 0 0 transparent;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--oi-spacing-xs);
+  height: var(--oi-button-size-height-default);
+  padding: 0 var(--oi-spacing-s);
+  border: none;
+  border-radius: var(--oi-border-radius-default);
+  font-family: var(--oi-font-family-default);
+  font-size: var(--oi-font-size-s);
+  font-weight: var(--oi-font-weight-600);
+  line-height: var(--oi-line-height-s);
+  cursor: pointer;
+  box-shadow:
+    var(--oi-shadow-low),
+    inset var(--iris-button-border);
+  transition: background-color var(--oi-motion-duration-short);
+
+  &--primary {
+    background-color: var(--oi-button-background-primary);
+    color: var(--oi-content-color-constant);
+
+    &:hover:not(:disabled),
+    &:focus-visible:not(:disabled) {
+      background-color: var(--oi-button-background-primary-hover);
+    }
+
+    &:active:not(:disabled) {
+      background-color: var(--oi-button-background-primary-active);
+    }
+  }
+
+  &--secondary {
+    background-color: var(--oi-button-background-secondary);
+    color: var(--oi-content-color-primary);
+    --iris-button-border: 0 0 0 var(--oi-border-width-default) var(--oi-border-color-default);
+
+    &:hover:not(:disabled) {
+      background-color: var(--oi-button-background-secondary-hover);
+      --iris-button-border: 0 0 0 var(--oi-border-width-default) var(--oi-border-color-strong);
+    }
+
+    &:active:not(:disabled) {
+      background-color: var(--oi-button-background-secondary-active);
+    }
+  }
+
+  &--ghost {
+    background-color: transparent;
+    color: var(--oi-content-color-secondary);
+    box-shadow: none;
+
+    &:hover:not(:disabled) {
+      background-color: var(--oi-button-background-secondary-hover);
+      color: var(--oi-content-color-primary);
+    }
+
+    &:active:not(:disabled) {
+      background-color: var(--oi-button-background-secondary-active);
+    }
+  }
+
+  // Danger is an outlined style in Figma, not a solid fill, and has no pressed state — hover
+  // styling persists while the button is held.
+  &--danger {
+    background-color: var(--oi-button-background-secondary);
+    color: var(--oi-content-color-error);
+    --iris-button-border: 0 0 0 var(--oi-border-width-default) var(--oi-content-color-error);
+
+    &:hover:not(:disabled) {
+      background-color: var(--oi-background-color-error);
+    }
+
+    &:disabled {
+      --iris-button-border: 0 0 0 0 transparent;
+    }
+  }
+
+  &--sm {
+    height: var(--oi-button-size-height-s);
+    padding: 0 var(--oi-spacing-s);
+    font-size: var(--oi-font-size-s);
+
+    &.iris-button--leading-icon {
+      padding-left: var(--oi-spacing-xs);
+    }
+
+    &.iris-button--trailing-icon {
+      padding-right: var(--oi-spacing-xs);
+    }
+  }
+
+  &--lg {
+    height: var(--oi-button-size-height-l);
+    padding: 0 var(--oi-spacing-m);
+    font-size: var(--oi-font-size-s);
+
+    &.iris-button--leading-icon {
+      padding-left: var(--oi-spacing-s);
+    }
+
+    &.iris-button--trailing-icon {
+      padding-right: var(--oi-spacing-s);
+    }
+  }
+
+  &--label-hidden {
+    padding: 0;
+    // min-width, not width, so a second icon can widen the square rather than overflow it.
+    min-width: var(--oi-button-size-height-default);
+
+    &.iris-button--sm {
+      min-width: var(--oi-button-size-height-s);
+    }
+
+    &.iris-button--lg {
+      min-width: var(--oi-button-size-height-l);
+    }
+  }
+
+  &:disabled {
+    background-color: var(--oi-button-background-disabled);
+    color: var(--oi-content-color-constant);
+    box-shadow: inset var(--iris-button-border);
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow:
+      var(--oi-focus-ring),
+      inset var(--iris-button-border);
+  }
+}

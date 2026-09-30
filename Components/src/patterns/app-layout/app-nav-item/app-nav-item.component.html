@@ -1,0 +1,38 @@
+@if (href()) {
+  <a
+    class="iris-app-nav-item"
+    [class.iris-app-nav-item--active]="active()"
+    [class.iris-app-nav-item--disabled]="disabled()"
+    [class.iris-app-nav-item--child]="showAsChild"
+    [href]="disabled() ? null : href()"
+    [attr.aria-current]="active() ? 'page' : null"
+    [attr.aria-disabled]="disabled() ? 'true' : null"
+    [attr.tabindex]="disabled() ? -1 : null"
+    (click)="onSelect($event)">
+    <ng-container [ngTemplateOutlet]="content" />
+  </a>
+} @else {
+  <button
+    class="iris-app-nav-item"
+    type="button"
+    [class.iris-app-nav-item--active]="active()"
+    [class.iris-app-nav-item--disabled]="disabled()"
+    [class.iris-app-nav-item--child]="showAsChild"
+    [disabled]="disabled()"
+    [attr.aria-current]="active() ? 'page' : null"
+    [attr.aria-disabled]="disabled() ? 'true' : null"
+    [attr.tabindex]="disabled() ? -1 : null"
+    (click)="onSelect($event)">
+    <ng-container [ngTemplateOutlet]="content" />
+  </button>
+}
+
+<ng-template #content>
+  @if (showAsChild) {
+    <span class="iris-app-nav-item__trail"></span>
+  }
+  @if (icon(); as iconName) {
+    <iris-icon class="iris-app-nav-item__icon" [name]="iconName" [size]="16" [decorative]="true" />
+  }
+  <span class="iris-app-nav-item__label">{{ label() }}</span>
+</ng-template>
